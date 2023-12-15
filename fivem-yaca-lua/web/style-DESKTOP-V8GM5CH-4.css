@@ -1,0 +1,16 @@
+html,body{
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    margin: 0;
+    padding: 0;
+}
+
+.main_voice_Default_UI_Frame{
+    position: absolute;
+    top: 2%;
+    left: 3%;
+    width: 10%;
+    height: 10%;
+    background-color: aquamarine;
+}
