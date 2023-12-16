@@ -40,6 +40,7 @@ function InitTeamspeakPlugin()
         channelToMoveWhenINGame = json.encode(Config.voice_InGame_Side_Channels),
         muffling_range = Config.InGame_Default_Range_by_Start,
         voice_Build_Type = Config.voice_Build_Type,
+        useWhisper = Config.voice_use_whisper,
     })
 end
 
@@ -105,4 +106,9 @@ RegisterNetEvent("yaca:Voice:checkInitState",function ()
     if teamspeakName == nil and VoiceState == nil then
         InitTeamspeakPlugin()
     end
+end)
+
+RegisterNetEvent("yaca:Voice:UpdateInfos",function ()
+    local isSwimming = IsPedSwimmingUnderWater(GetPlayerPed(-1))
+    local roomKey = GetRoomKeyFromEntity(GetPlayerPed(-1))
 end)

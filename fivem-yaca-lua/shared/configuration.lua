@@ -8,7 +8,8 @@ Config.voice_InGame_Name_Prefix = "[YACA] "
 Config.voice_InGame_Side_Channels = {1337}
 
 /* Teamspeak-Voice Version Build || Release oder Build */
-Config.voice_Build_Type = "Release"  
+Config.voice_Build_Type = "Release" 
+Config.voice_use_whisper = false -- Ab version 1.6 im System
 
 /* InGame Setting for Voice-Plugin */
 Config.InGame_Radio_Channel_Max = 9

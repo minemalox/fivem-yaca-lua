@@ -135,7 +135,9 @@ function init(dataObj){
         }
 
         teamspeakName = dataObj.ingameName;
-        document.getElementById('voiceRangeText').innerHTML = dataObj.muffling_range + ' m';
+        if(document.getElementById('voiceRangeText') != null){
+            document.getElementById('voiceRangeText').innerHTML = dataObj.muffling_range + ' m';
+        }
         sendWebSocket({
             base: {"request_type": "INIT"},
             server_guid: dataObj.suid,
@@ -149,17 +151,23 @@ function init(dataObj){
              * if the value is set to -1, the player voice range is taken
              * if the value is >= 0, you can set the max muffling range before it gets completely cut off
              */
-            muffling_range: dataObj.muffling_range
+            muffling_range: 2,
             //build_type: dataObj.voice_Build_Type,
-            //unmute_delay: 400
+            //unmute_delay: 400,
+            //operation_mode: dataObj.useWhisper ? 1 : 0,
         })
     });
 }
 
-
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
 function sendWebSocket(msg){
     if(this.socket != null){
+        while(this.socket.readyState == WebSocket.CONNECTING){
+            sleep(100);
+        }
         this.socket.send(JSON.stringify(msg))
     }
 }
@@ -180,7 +188,7 @@ window.addEventListener("message",(event)=>{
             player: {
                 player_direction: event.data.player_direction,
                 player_position: event.data.player_position,
-                player_range: event.data.player_range,
+                //player_range: event.data.player_range,
                 player_is_underwater: event.data.player_is_underwater,
                 //player_is_muted: event.data.player_is_muted,
                 players_list: event.data.players_list
