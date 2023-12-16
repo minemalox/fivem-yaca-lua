@@ -42,19 +42,15 @@ CreateThread(function ()
                             end
                         end
                     end
-
-                    if #PlayerinRange > 0 then
-                        print(dump(PlayerinRange))
-                        TriggerClientEvent('yaca:Voice:sendData:Ui',player.serverID,{
-                            actionCMD = "sendPlayer",
-                            player_direction = GetCamDirection(player.gtaPlayerObject),
-                            player_position = pCoords,
-                            --player_range = player.range,
-                            player_is_underwater = player.isSwimming,
-                            player_is_muted = player.IsMuted,
-                            players_list = json.encode(PlayerinRange)
-                        })
-                    end
+                    TriggerClientEvent('yaca:Voice:sendData:Ui',player.serverID,{
+                        actionCMD = "sendPlayer",
+                        player_direction = GetCamDirection(player.gtaPlayerObject),
+                        player_position = pCoords,
+                        --player_range = player.range,
+                        player_is_underwater = player.isSwimming,
+                        player_is_muted = player.IsMuted,
+                        players_list = json.encode(PlayerinRange)
+                    })
                 end
             end
         end

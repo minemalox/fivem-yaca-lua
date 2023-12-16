@@ -8,7 +8,6 @@ CreateThread(function ()
                     if tonumber(yacaPlayer.serverID) == tonumber(playerID) then
                         hasFound = true
                     end
-                    print('PlayerID ' .. playerID .. ' // ' .. yacaPlayer.serverID .. ' // ' .. tostring(hasFound))
                 end
                 if hasFound == false then
                     TriggerClientEvent("yaca:Voice:checkInitState",playerID)

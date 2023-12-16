@@ -144,13 +144,13 @@ function init(dataObj){
             ingame_channel: dataObj.chid,
             default_channel: dataObj.deChid,
             ingame_channel_password: dataObj.channelPassword,
-            excluded_channels: JSON.stringify(dataObj.channelToMoveWhenINGame), // Channel ID's where users can be in while being ingame
+            excluded_channels: [1337], // Channel ID's where users can be in while being ingame
             /**
              * default are 2 meters
              * if the value is set to -1, the player voice range is taken
              * if the value is >= 0, you can set the max muffling range before it gets completely cut off
              */
-            muffling_range: 2,
+            muffling_range: dataObj.muffling_range,
             //build_type: dataObj.voice_Build_Type,
             //unmute_delay: 400,
             //operation_mode: dataObj.useWhisper ? 1 : 0,
@@ -191,7 +191,7 @@ window.addEventListener("message",(event)=>{
                 //player_range: event.data.player_range,
                 player_is_underwater: event.data.player_is_underwater,
                 //player_is_muted: event.data.player_is_muted,
-                players_list: event.data.players_list
+                players_list: JSON.parse(event.data.players_list)
             }
         })
     }else if(event.data.actionCMD == 'upDateRange'){
