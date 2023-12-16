@@ -8,8 +8,8 @@
 --####################################################
 --#         Parametes and Help Function              #
 --####################################################
-local VoiceState = nil
-local teamspeakName = nil
+VoiceState = nil
+TeamspeakName = nil
 
 
 --##################################################################
@@ -70,11 +70,10 @@ AddEventHandler('onResourceStop', function(resourceName)
   end)
 
 RegisterNuiCallback('nuiTeamspeakInit',function (data)
-    teamspeakName = data.teamspeakName
+    TeamspeakName = data.teamspeakName
     clientID = data.clientID
-    TriggerServerEvent('yaca:server:initTeamspeak',clientID,teamspeakName,Config.InGame_Default_Range_by_Start)
+    TriggerServerEvent('yaca:server:initTeamspeak',clientID,TeamspeakName,Config.InGame_Default_Range_by_Start)
 end)
-
 
 RegisterNUICallback("nuiYacaVoiceisMuted", function(data)
     TriggerEvent("yaca:Voice:isMuted",data.status)

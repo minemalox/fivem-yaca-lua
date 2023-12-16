@@ -3,7 +3,9 @@
 --  all Player Id's and more helping Function
 --################################################################
 
-YacaRadioCahnnels = {
-    frequenz = 0,
-    radioMember = {},
-}
+function YacaRadioCahnnels(frequenz,radioMember)
+    return {
+        frequenz = frequenz or 0,
+        radioMember = radioMember or {},
+    }
+end
