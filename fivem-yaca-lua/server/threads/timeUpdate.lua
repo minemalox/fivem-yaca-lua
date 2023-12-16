@@ -5,6 +5,6 @@ CreateThread(function ()
                 TriggerClientEvent("yaca:Voice:UpdateInfos",element.serverID)
             end
         end
-    Wait(1000)
+    Wait(300)
     end
 end)

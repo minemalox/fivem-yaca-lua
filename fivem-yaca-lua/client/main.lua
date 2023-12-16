@@ -103,7 +103,7 @@ RegisterNetEvent("yaca:Voice:sendData:Ui",function(data)
 end)
 
 RegisterNetEvent("yaca:Voice:checkInitState",function ()
-    if teamspeakName == nil and VoiceState == nil then
+    if teamspeakName == nil then
         InitTeamspeakPlugin()
     end
 end)

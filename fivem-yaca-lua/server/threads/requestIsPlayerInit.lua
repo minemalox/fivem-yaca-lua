@@ -5,15 +5,16 @@ CreateThread(function ()
             for _,playerID in ipairs(allPlayers) do
                 local hasFound = false
                 for _,yacaPlayer in ipairs(YacaPlayerList) do
-                    if yacaPlayer.serverID == playerID then
+                    if tonumber(yacaPlayer.serverID) == tonumber(playerID) then
                         hasFound = true
                     end
+                    print('PlayerID ' .. playerID .. ' // ' .. yacaPlayer.serverID .. ' // ' .. tostring(hasFound))
                 end
                 if hasFound == false then
                     TriggerClientEvent("yaca:Voice:checkInitState",playerID)
                 end
             end
         end
-        Wait(5000)
+        Wait(30000)
     end
 end)

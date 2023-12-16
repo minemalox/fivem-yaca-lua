@@ -124,7 +124,6 @@ function init(dataObj){
         console.log("[Yaca-WebSocket] Close: ",event);
     }
 
-
     this.socket.addEventListener("open",(event)=>{
         buildType = 0
 
@@ -145,7 +144,7 @@ function init(dataObj){
             ingame_channel: dataObj.chid,
             default_channel: dataObj.deChid,
             ingame_channel_password: dataObj.channelPassword,
-            excluded_channels: JSON.parse(dataObj.channelToMoveWhenINGame), // Channel ID's where users can be in while being ingame
+            excluded_channels: JSON.stringify(dataObj.channelToMoveWhenINGame), // Channel ID's where users can be in while being ingame
             /**
              * default are 2 meters
              * if the value is set to -1, the player voice range is taken
@@ -168,6 +167,7 @@ function sendWebSocket(msg){
         while(this.socket.readyState == WebSocket.CONNECTING){
             sleep(100);
         }
+        console.log(JSON.stringify(msg))
         this.socket.send(JSON.stringify(msg))
     }
 }
