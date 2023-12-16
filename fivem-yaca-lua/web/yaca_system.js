@@ -80,10 +80,14 @@ function handleRequst(event){
         break;
         case "MUTE_STATE":
             if(YacaObjekt.message == "1"){
+                document.getElementById('mudemikeIcon').style.display = "inline";
+                document.getElementById('mikeIcon').style.display = "none";
                 $.post("https://fivem-yaca-lua/nuiYacaVoiceisMuted",JSON.stringify({
                     status: true,
                 }));
             }else if(YacaObjekt.message == "0"){
+                document.getElementById('mudemikeIcon').style.display = "none";
+                document.getElementById('mikeIcon').style.display = "inline";
                 $.post("https://fivem-yaca-lua/nuiYacaVoiceisMuted",JSON.stringify({
                     status: false,
                 }));
@@ -91,10 +95,12 @@ function handleRequst(event){
         break;
         case "TALK_STATE":
             if(YacaObjekt.message == 1){
+                document.getElementById('mikeIcon').style.color = "#077807";
                 $.post("https://fivem-yaca-lua/nuiYacaVoiceisTalking",JSON.stringify({
                     status: true
                 }));
             }else if(YacaObjekt.message == 0){
+                document.getElementById('mikeIcon').style.color = "grey";
                 $.post("https://fivem-yaca-lua/nuiYacaVoiceisTalking",JSON.stringify({
                     status: false
                 }));
@@ -129,7 +135,7 @@ function init(dataObj){
         }
 
         teamspeakName = dataObj.ingameName;
-
+        document.getElementById('voiceRangeText').innerHTML = dataObj.muffling_range + ' m';
         sendWebSocket({
             base: {"request_type": "INIT"},
             server_guid: dataObj.suid,
@@ -164,6 +170,10 @@ window.addEventListener("message",(event)=>{
     if(event.data.actionCMD == 'init'){
         console.log("INIT - Web Socket")
         init(event.data);
+    }else if(event.data.actionCMD == 'UnInit'){
+        this.socket.close();
+        this.socket = null;
+        this.firstConnection = true;
     }else if(event.data.actionCMD == 'sendPlayer'){
         sendWebSocket({
             base: {request_type: "INGAME"},
@@ -176,6 +186,8 @@ window.addEventListener("message",(event)=>{
                 players_list: event.data.players_list
             }
         })
+    }else if(event.data.actionCMD == 'upDateRange'){
+        document.getElementById('voiceRangeText').innerHTML = event.data.range + ' m';
     }
 })
 

@@ -5,11 +5,17 @@
     Editing the code is at your own risk and only if you have advanced knowledge
 **/
 
+--####################################################
+--#         Parametes and Help Function              #
+--####################################################
 local VoiceState = nil
 local teamspeakName = nil
 
 
-function generateRandomString(length)
+--##################################################################
+--#  Function to generate an Random String for the Teamspeak-Name
+--##################################################################
+function GenerateRandomString(length)
     local characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     local randomString = ""
     local random = math.random
@@ -22,17 +28,8 @@ function generateRandomString(length)
     return randomString
 end
 
-
-RegisterNetEvent('onClientResourceStart',function(resource)
-    if(resource == GetCurrentResourceName()) then
-        print('[Yaca-Voice] System succesfull started!')
-        Wait(100)
-        initTeamspeakPlugin()
-    end
-end)
-
-function initTeamspeakPlugin()
-    ingameName = Config.voice_InGame_Name_Prefix .. '' .. generateRandomString(20)
+function InitTeamspeakPlugin()
+    ingameName = Config.voice_InGame_Name_Prefix .. '' .. GenerateRandomString(20)
     SendNUIMessage({
         actionCMD = 'init',
         suid = Config.voice_UniqueServerID,
@@ -45,6 +42,32 @@ function initTeamspeakPlugin()
         voice_Build_Type = Config.voice_Build_Type,
     })
 end
+
+function UnInitTeamspeakPlugin()
+    SendNUIMessage({
+        actionCMD = 'UnInit',
+    })
+end
+
+--####################################################################
+--#         Own created Events and Default / NUI Events              #
+--####################################################################
+RegisterNetEvent('onClientResourceStart',function(resource)
+    if(resource == GetCurrentResourceName()) then
+        print('[Yaca-Voice] System succesfull started!')
+        Wait(100)
+        InitTeamspeakPlugin()
+    end
+end)
+
+AddEventHandler('onResourceStop', function(resourceName)
+    if (GetCurrentResourceName() ~= resourceName) then
+      return
+    end
+    UnInitTeamspeakPlugin()
+    Wait(100)
+    print('[Yaca-Voice] System succesfull stopped!')
+  end)
 
 RegisterNuiCallback('nuiTeamspeakInit',function (data)
     teamspeakName = data.teamspeakName
@@ -77,4 +100,10 @@ end)
 
 RegisterNetEvent("yaca:Voice:sendData:Ui",function(data)
     SendNUIMessage(data)
+end)
+
+RegisterNetEvent("yaca:Voice:checkInitState",function ()
+    if teamspeakName == nil and VoiceState == nil then
+        InitTeamspeakPlugin()
+    end
 end)

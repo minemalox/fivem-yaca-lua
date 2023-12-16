@@ -49,7 +49,7 @@ CreateThread(function ()
                             actionCMD = "sendPlayer",
                             player_direction = GetCamDirection(player.gtaPlayerObject),
                             player_position = pCoords,
-                            player_range = player.range,
+                            --player_range = player.range,
                             player_is_underwater = player.isSwimming,
                             player_is_muted = player.IsMuted,
                             players_list = json.encode(PlayerinRange)

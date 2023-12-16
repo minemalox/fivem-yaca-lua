@@ -24,7 +24,8 @@ shared_scripts {
 server_scripts{
     '/server/*.lua',
     '/server/handler/*.lua',
-    '/server/yaca_entitys/*.lua'
+    '/server/yaca_entitys/*.lua',
+    '/server/threads/*.lua'
 }
 
 
