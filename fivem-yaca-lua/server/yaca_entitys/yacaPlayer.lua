@@ -17,6 +17,7 @@ function YacaPlayer(clientID,serverID,isSwimming,teamspeakID,isMuted,range,muffl
         muffleIntensity =  muffleIntensity or 0,
         gtaPlayerObject = gtaPlayerObject or 0,
         callID = 0,
+        isDead = false,
         upDateCallID = function(self,callID)
             self.callID = callID or 0
         end
