@@ -1,4 +1,4 @@
-## Yaca System for FiveM :snail
+## Yaca System for FiveM 🐌
 
 This is a example implementation for FiveM. Feel free to report bugs via issues or contribute via pull requests.
 
@@ -25,6 +25,6 @@ Server-Event: "yaca:Voice:state:server" <br />
 ## Events Clients / Server to Trigger
 
 Set Death of an Player: <br />
-[Client] :arrow_right yaca:voice:client:setPlayerDead <br />
-[Server] :arrow_right yaca:voice:server:setPlayerDead
+[Client] ➡️ yaca:voice:client:setPlayerDead <br />
+[Server] ➡️ yaca:voice:server:setPlayerDead
 
