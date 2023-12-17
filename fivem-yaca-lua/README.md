@@ -1,4 +1,4 @@
-**yaca.systems for FiveM**
+## Yaca System for FiveM :snail
 
 This is a example implementation for FiveM. Feel free to report bugs via issues or contribute via pull requests.
 
@@ -9,22 +9,22 @@ For Use the Server-Events too, Enable it in the Configuration File
 
 ## Events Client / Server Triggerd From Skript
 
-Is Player Muted:
-Client-Event: "yaca:Voice:isMuted"
-Server-Event: "yaca:Voice:isMuted:server"
+Is Player Muted: <br />
+Client-Event: "yaca:Voice:isMuted" <br />
+Server-Event: "yaca:Voice:isMuted:server" <br />
 
-Is Player Talking:
-Client-Event: "yaca:Voice:isTalking"
-Server-Event: "yaca:Voice:isTalking:server"
+Is Player Talking: <br />
+Client-Event: "yaca:Voice:isTalking" <br />
+Server-Event: "yaca:Voice:isTalking:server" <br />
 
-Player Voice State:
-Client-Event: "yaca:Voice:state"
-Server-Event: "yaca:Voice:state:server"
+Player Voice State: <br />
+Client-Event: "yaca:Voice:state" <br />
+Server-Event: "yaca:Voice:state:server" <br />
 
 
 ## Events Clients / Server to Trigger
 
-Set Death of an Player:
-[Client] :arrow_right yaca:voice:client:setPlayerDead 
+Set Death of an Player: <br />
+[Client] :arrow_right yaca:voice:client:setPlayerDead <br />
 [Server] :arrow_right yaca:voice:server:setPlayerDead
 
