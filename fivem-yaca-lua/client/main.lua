@@ -10,6 +10,8 @@
 --####################################################
 VoiceState = nil
 TeamspeakName = nil
+PlayerInNear = {}
+OwnPlayerObj = nil
 
 
 --##################################################################
@@ -49,6 +51,16 @@ function UnInitTeamspeakPlugin()
         actionCMD = 'UnInit',
     })
 end
+
+function GetCamDirection()
+    local rotVector = GetGameplayCamRot(0)
+    local num = rotVector.z * 0.0174532924
+    local num2 = rotVector.x * 0.0174532924
+    local num3 = math.abs(math.cos(num2))
+
+    return vector3(-math.sin(num) * num3,math.cos(num) * num3,GetEntityForwardVector(GetPlayerPed(-1)).z)
+end
+
 
 --####################################################################
 --#         Own created Events and Default / NUI Events              #
@@ -102,13 +114,64 @@ RegisterNetEvent("yaca:Voice:sendData:Ui",function(data)
     SendNUIMessage(data)
 end)
 
+RegisterNetEvent("yaca:Voice:upDatePlayerInNear",function(playerinnear)
+    PlayerInNear = playerinnear
+end)
+
+RegisterNetEvent("yaca:Voice:setPlayerOBJ",function(playerObj)
+    OwnPlayerObj = playerObj
+end)
+
 RegisterNetEvent("yaca:Voice:checkInitState",function ()
     if teamspeakName == nil then
         InitTeamspeakPlugin()
     end
 end)
 
-RegisterNetEvent("yaca:Voice:UpdateInfos",function ()
-    local isSwimming = IsPedSwimmingUnderWater(GetPlayerPed(-1))
-    local roomKey = GetRoomKeyFromEntity(GetPlayerPed(-1))
+
+CreateThread(function ()
+    while true do
+        if #PlayerInNear > 0 then
+            if OwnPlayerObj ~= nil then
+                local pCoords = GetEntityCoords(GetPlayerPed(-1))
+                local currentRoom = GetRoomKeyFromEntity(GetPlayerPed(-1))
+                PlayerinRange = {}
+
+                if pCoords ~= nil then
+                    for _,target in ipairs(PlayerInNear) do
+                        local tCoords  = GetEntityCoords(target.gtaPlayerObject)
+                        if tCoords ~= nil then
+                            if #(pCoords - tCoords) <= OwnPlayerObj.range then
+                                local muffleIntensity = 0;
+                                if (currentRoom ~= GetRoomKeyFromEntity(GetPlayerPed(target.gtaPlayerObject)) and not HasEntityClearLosToEntity(GetPlayerPed(-1),GetPlayerPed(target.gtaPlayerObject), 17)) then
+                                    muffleIntensity = 10; -- 10 is the maximum intensity
+                                end
+
+                                table.insert(PlayerinRange,{
+                                    client_id = target.clientID,
+                                    position = tCoords,
+                                    direction = GetPlayerCameraRotation(target.gtaPlayerObject),
+                                    range = target.range,
+                                    is_underwater = IsPedSwimmingUnderWater(GetPlayerPed(target.gtaPlayerObject)),
+                                    muffle_intensity = muffleIntensity
+                                    --is_muted = target.isMuted
+                                })
+                            end
+                        end
+                    end
+                end
+
+                SendNUIMessage({
+                    actionCMD = "sendPlayer",
+                    player_direction = GetCamDirection(),
+                    player_position = pCoords,
+                    --player_range = player.range,
+                    player_is_underwater = player.isSwimming,
+                    player_is_muted = player.IsMuted,
+                    players_list = json.encode(PlayerinRange)
+                })
+            end
+        end
+        Wait(300)
+    end
 end)

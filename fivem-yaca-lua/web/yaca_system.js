@@ -167,7 +167,7 @@ function sendWebSocket(msg){
         while(this.socket.readyState == WebSocket.CONNECTING){
             sleep(100);
         }
-        console.log(JSON.stringify(msg))
+        //console.log(JSON.stringify(msg))
         this.socket.send(JSON.stringify(msg))
     }
 }

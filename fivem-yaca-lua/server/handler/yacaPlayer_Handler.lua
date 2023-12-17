@@ -4,6 +4,7 @@ YacaPlayerList = {}
 RegisterNetEvent('yaca:server:initTeamspeak',function(clientID,teamspeakID,range)
    print('New Player was Added ' .. teamspeakID)
    player = YacaPlayer(clientID,source,false,teamspeakID,false,range,0,GetPlayerPed(source))
+   TriggerClientEvent('yaca:Voice:setPlayerOBJ',source,player)
    table.insert(YacaPlayerList,player)
 end)
 
