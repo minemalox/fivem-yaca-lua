@@ -146,7 +146,6 @@ CreateThread(function ()
                                 if (currentRoom ~= GetRoomKeyFromEntity(GetPlayerPed(target.gtaPlayerObject)) and not HasEntityClearLosToEntity(GetPlayerPed(-1),GetPlayerPed(target.gtaPlayerObject), 17)) then
                                     muffleIntensity = 10; -- 10 is the maximum intensity
                                 end
-
                                 table.insert(PlayerinRange,{
                                     client_id = target.clientID,
                                     position = tCoords,
@@ -160,16 +159,28 @@ CreateThread(function ()
                         end
                     end
                 end
-
-                SendNUIMessage({
-                    actionCMD = "sendPlayer",
-                    player_direction = GetCamDirection(),
-                    player_position = pCoords,
-                    --player_range = player.range,
-                    player_is_underwater = player.isSwimming,
-                    player_is_muted = player.IsMuted,
-                    players_list = json.encode(PlayerinRange)
-                })
+                
+                if OwnPlayerObj.isDead == true then
+                    SendNUIMessage({
+                        actionCMD = "sendPlayer",
+                        player_direction = GetCamDirection(),
+                        player_position = pCoords,
+                        --player_range = player.range,
+                        player_is_underwater = player.isSwimming,
+                        player_is_muted = player.isDead,
+                        players_list = json.encode(PlayerinRange)
+                    })
+                else
+                    SendNUIMessage({
+                        actionCMD = "sendPlayer",
+                        player_direction = GetCamDirection(),
+                        player_position = pCoords,
+                        --player_range = player.range,
+                        player_is_underwater = player.isSwimming,
+                        player_is_muted = player.IsMuted,
+                        players_list = json.encode(PlayerinRange)
+                    })
+                end
             end
         end
         Wait(300)
