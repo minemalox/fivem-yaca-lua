@@ -122,6 +122,12 @@ RegisterNetEvent("yaca:Voice:setPlayerOBJ",function(playerObj)
     OwnPlayerObj = playerObj
 end)
 
+
+RegisterNetEvent('yaca:Voice:upDateDeath',function (state)
+    OwnPlayerObj.isDead = state
+end)
+
+
 RegisterNetEvent("yaca:Voice:checkInitState",function ()
     if teamspeakName == nil then
         InitTeamspeakPlugin()

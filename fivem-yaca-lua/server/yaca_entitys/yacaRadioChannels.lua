@@ -3,9 +3,10 @@
 --  all Player Id's and more helping Function
 --################################################################
 
-function YacaRadioCahnnels(frequenz,radioMember)
+function YacaRadioChannels(frequenz,job,radioMember)
     return {
         frequenz = frequenz or 0,
+        job = job or nil,
         radioMember = radioMember or {},
     }
 end

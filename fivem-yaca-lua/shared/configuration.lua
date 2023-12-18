@@ -12,11 +12,17 @@ Config.voice_Build_Type = "Release"
 Config.voice_use_whisper = false -- Ab version 1.6 im System
 
 /* InGame Setting for Voice-Plugin */
-Config.InGame_Radio_Channel_Max = 9
 Config.InGame_Phone_Speaker_Max_Range = 5
 
 Config.InGame_Default_Range_by_Start = 2
 
+
+Config.infiniteRadioFrequencies = true
+Config.radioWhiteList = {
+    [5] = {
+        job = "police",
+    }
+}
 
 
 Config.Default_Hud_UI = true
