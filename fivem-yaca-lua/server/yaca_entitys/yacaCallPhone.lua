@@ -8,9 +8,7 @@ function YacaCallPhone(callID,callStarted)
         callID = callID or 0,
         callStarted = callStarted or 0,
         callMemberList = {},
-        upDatingCallStarted = function(self,callStarted)
-            self.callStarted = callStarted or 0
-        end,
+        isBreaked = false,
         addPlayerToCall = function (self,playerObject)
             table.insert(self.callMemberList,playerObject)
         end,

@@ -31,7 +31,7 @@ function GenerateRandomString(length)
 end
 
 function InitTeamspeakPlugin()
-    ingameName = Config.voice_InGame_Name_Prefix .. '' .. GenerateRandomString(20)
+    local ingameName = Config.voice_InGame_Name_Prefix .. '' .. GenerateRandomString(20)
     SendNUIMessage({
         actionCMD = 'init',
         suid = Config.voice_UniqueServerID,
@@ -84,7 +84,7 @@ AddEventHandler('onResourceStop', function(resourceName)
 
 RegisterNuiCallback('nuiTeamspeakInit',function (data)
     TeamspeakName = data.teamspeakName
-    clientID = data.clientID
+    local clientID = data.clientID
     TriggerServerEvent('yaca:server:initTeamspeak',clientID,TeamspeakName,Config.InGame_Default_Range_by_Start)
 end)
 
@@ -129,7 +129,7 @@ end)
 
 
 RegisterNetEvent("yaca:Voice:checkInitState",function ()
-    if teamspeakName == nil then
+    if TeamspeakName == nil then
         InitTeamspeakPlugin()
     end
 end)
@@ -189,6 +189,18 @@ CreateThread(function ()
                 end
             end
         end
+        checkCommTypePhoneAndRadio()
         Wait(300)
     end
 end)
+
+
+function checkCommTypePhoneAndRadio ()
+    if #YacaPhoneCalls > 0 then
+        for _,phoneCall in ipairs(YacaPhoneCalls) do
+            for _,player in ipairs(phoneCall.callMemberList) do
+                
+            end
+        end
+    end
+end

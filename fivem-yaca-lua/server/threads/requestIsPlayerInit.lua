@@ -10,6 +10,7 @@ CreateThread(function ()
                     end
                 end
                 if hasFound == false then
+                    playerID = tonumber(playerID)
                     TriggerClientEvent("yaca:Voice:checkInitState",playerID)
                 end
             end

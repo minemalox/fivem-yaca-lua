@@ -194,6 +194,12 @@ window.addEventListener("message",(event)=>{
                 players_list: JSON.parse(event.data.players_list)
             }
         })
+    }
+    else if(event.data.actionCMD == 'sendCommType'){
+        sendWebSocket({
+            base: {request_type: "INGAME"},
+            comm_device: event.data.protocol
+        })
     }else if(event.data.actionCMD == 'upDateRange'){
         document.getElementById('voiceRangeText').innerHTML = event.data.range + ' m';
     }

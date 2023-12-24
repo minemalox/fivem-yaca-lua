@@ -23,6 +23,18 @@ function dump(o)
 end
 
 
+function getYacaPlayer(source)
+   if #YacaPlayerList > 0 then
+      for _,player in ipairs(YacaPlayerList) do
+         if source == player.serverID then
+            return player
+         end
+      end
+   end
+end
+
+
+
 
 AddEventHandler('playerDropped', function (reason)
    if #YacaCallList > 0 then

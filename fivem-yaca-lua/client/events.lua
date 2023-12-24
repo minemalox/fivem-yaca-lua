@@ -9,3 +9,8 @@ end)
 RegisterNetEvent('yaca:voice:client:setRadioFreaqunzWithJob',function (frequenz,job)
     TriggerServerEvent('yaca:voice:server:setRadioFreaqunzWihtJob',frequenz,job)
 end)
+
+
+RegisterNetEvent('yaca:voice:client:setDead',function (state)
+    TriggerServerEvent('yaca:voice:server:setDead',state)
+end)

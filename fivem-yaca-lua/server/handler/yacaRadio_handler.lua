@@ -1,6 +1,6 @@
 YacaRadioList = {}
 
-function createRadioChannel(frequenz,job)
+function CreateRadioChannel(frequenz,job)
     local existRadioChannel = false
 
     for _,element in ipairs(YacaRadioList) do
@@ -11,26 +11,26 @@ function createRadioChannel(frequenz,job)
 
     if not existRadioChannel then
         for index,element in ipairs(Config.radioWhiteList)do
-            if index = frequenz then
+            if index == frequenz then
                 if element.job == "" and job == nil then
-                    table.insert(YacaRadioList,new YacaRadioChannels(frequenz,job,{}))
+                    table.insert(YacaRadioList,YacaRadioChannels(frequenz,job,{}))
                     return true
                 elseif element.job == job then
-                    table.insert(YacaRadioList,new YacaRadioChannels(frequenz,job,{}))
+                    table.insert(YacaRadioList,YacaRadioChannels(frequenz,job,{}))
                     return true
                 else
-                    return false
                     print('[Yaca - Voice] Dont Create Radio Channel')
+                    return false
                 end
             end
         end
     else
-        return false
         print('[Yaca - Voice] Radio Channel Exist')
+        return false
     end
 end
 
-function addPlayerToRadioChannel(freaguenz,playerObj,job)
+function AddPlayerToRadioChannel(freaguenz,playerObj,job)
     local existRadioChannel = false
 
     for index,element in ipairs(YacaRadioList)do 
