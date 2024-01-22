@@ -1,11 +1,4 @@
 let isConnected = false;
-let serverUniqueIdentifierFilter = null;
-
-// Packet Stats
-let packetsSent = 0;
-let packetsReceived = 0;
-let lastCommand = "";
-
 let webSocket = null;
 
 function connect() {
@@ -19,10 +12,8 @@ function connect() {
     }
 
     webSocket.onmessage = (event) => {
+        console.error(event);
         sendNuiData("YACA_OnMessage", event.data);
-
-        packetsReceived++;
-        updateHtml();
     };
 
     webSocket.onerror = (event) => {
@@ -32,15 +23,12 @@ function connect() {
 
     webSocket.onopen = () => {
         isConnected = true;
-        console.log("[YACA] connected");
-
         sendNuiData("YACA_OnConnected");
     };
 
     webSocket.onclose = (event) => {
-        isConnected = false;
-
         console.log(event)
+        isConnected = false;
 
         sendNuiData("YACA_OnDisconnected", {
             code: event.code, 
@@ -51,29 +39,12 @@ function connect() {
     }
 }
 
-function setWebSocketAddress(address) {
-    if (typeof address === "string")
-        pluginAddress = address;
-}
-
-function setServerUniqueIdentifierFilter(serverUniqueIdentifier) {
-    if (typeof serverUniqueIdentifier === "string")
-        serverUniqueIdentifierFilter = serverUniqueIdentifier;
-}
-
 function runCommand(command) {
     if (!isConnected || typeof command !== "string") {
-        lastCommand = "unexpected command";
-        updateHtml();
-
         return;
     }
 
     webSocket.send(command);
-
-    packetsSent++;
-    lastCommand = command;
-    updateHtml();
 }
 
 function sendNuiData(event, data) {
@@ -85,34 +56,19 @@ function sendNuiData(event, data) {
     }
 }
 
-function showBody(show) {
-    if (show) {
-        $("body").show();
-    }
-    else {
-        $("body").hide();
-    }
-}
-
 $(function () {
     window.addEventListener("DOMContentLoaded", function () {
-        //connect();
-        updateHtml();
-
         sendNuiData("YACA_OnNuiReady");
     });
 
     window.addEventListener('message', function (event) {
-        if (typeof event.data.Function === "string") {
-            if (typeof event.data.Params === "undefined") {
-                window[event.data.Function]();
-            }
-            else if (Array.isArray(event.data.Params) && event.data.Params.length == 1) {
-                window[event.data.Function](event.data.Params[0]);
-            }
-            else {
-                window[event.data.Function](event.data.Params);
-            }
+        switch (event.data.action) {
+            case "connect":
+                connect();
+                break;
+            case "command":
+                runCommand(event.data.data);
+                break;
         }
     }, false);
 });

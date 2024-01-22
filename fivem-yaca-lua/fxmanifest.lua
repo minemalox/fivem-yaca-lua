@@ -7,7 +7,7 @@ lua54 "yes"
 ui_page 'web/index.html'
 
 files {
-    'client/*.lua',
+    'client/modules/*.lua',
     'web/index.html',
     'web/script.js',
 }
@@ -18,9 +18,9 @@ shared_scripts {
 }
 
 client_scripts {
-    "client/*.lua"
+    "client/cl_main.lua"
 }
 
 server_scripts {
-    "server/*.lua"
+    "server/sv_main.lua"
 }

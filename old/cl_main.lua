@@ -39,8 +39,7 @@ local translations = {
     WRONG_TS_SERVER = "You are on the wrong teamspeakserver!",
     NOT_CONNECTED = "You are on the wrong teamspeakserver!",
     MOVE_ERROR = "Error while moving into ingame teamspeak channel!",
-    WAIT_GAME_INIT = "",
-    HEARTBEAT = ""
+    WAIT_GAME_INIT = ""
 }
 
 local rangeInterval = nil
@@ -70,9 +69,8 @@ local readyState = 3
 local storedDataObj = nil
 
 function initRequest(dataObj)
-    if not dataObj or not dataObj.suid or type(dataObj.chid) ~= "number" or not dataObj.deChid or not dataObj.ingameName or not dataObj.channelPassword then
-        print("YACA: Invalid init request")
-        return
+    if not dataObj or not dataObj.suid or not dataObj.chid or not dataObj.deChid or not dataObj.ingameName or not dataObj.channelPassword then
+        return print("YACA: Invalid init request")
     end
 
     sendWebsocket({
@@ -84,16 +82,13 @@ function initRequest(dataObj)
         ingame_channel = dataObj.chid,
         default_channel = dataObj.deChid,
         ingame_channel_password = dataObj.channelPassword,
-        excluded_channels = Settings["EXCLUDED_CHANNELS"], -- Channel ID's where users can be in while being ingame
+        excluded_channels = { 1337 }, -- Channel ID's where users can be in while being ingame
         --[[
          * default are 2 meters
          * if the value is set to -1, the player voice range is taken
          * if the value is >= 0, you can set the max muffling range before it gets completely cut off
         ]]
-        muffling_range = 2,
-        build_type = YacaBuildType.RELEASE, -- 0 = Release, 1 = Debug,
-        unmute_delay = 400,
-        operation_mode = dataObj.useWhisper and 1 or 0,
+        muffling_range = 2
     })
 end
 
@@ -291,6 +286,35 @@ function handleResponse(payload)
     EndTextCommandThefeedPostTicker(false, false)
 end
 
+function radarNotification(message)
+    --[[
+        ~g~ --> green
+        ~w~ --> white
+        ~r~ --> white
+    ]]
+
+    BeginTextCommandThefeedPost("STRING")
+    AddTextComponentSubstringPlayerName(message)
+    EndTextCommandThefeedPostTicker(false, false)
+end
+
+function sendWebsocket(msg)
+    if not websocket then
+        return print("[Voice-Websocket]: No websocket created")
+    end
+
+    if readyState ~= 1 then
+        return print("[Voice-Websocket]: Websocket not ready")
+    end
+
+    local nuiMessage = {
+        Function = "runCommand",
+        Params = json.encode(msg)
+    }
+
+    SendNuiMessage(json.encode(nuiMessage))
+end
+
 function disableRadioFromPlayerInChannel(channel)
     if not playersInRadioChannel[channel] then
         return
@@ -416,7 +440,14 @@ end)
     radioChannelSettings[channel].frequency = frequency
 end) ]]
 
+function getCamDirection()
+    local rotVector = GetGameplayCamRot(0)
+    local num = rotVector.z * 0.0174532924
+    local num2 = rotVector.x * 0.0174532924
+    local num3 = math.abs(math.cos(num2))
 
+    return vector3(-math.sin(num) * num3, math.cos(num) * num3, GetEntityForwardVector(cache.ped).z)
+end
 
 function calcPlayers()
     rangeInterval = true
@@ -510,6 +541,46 @@ function calcPlayers()
         Wait(250)
     end
 end
+
+RegisterNUICallback("YACA_OnMessage", function(data, cb)
+    handleResponse(data)
+
+    -- print("[YACA-Websocket] Message: " .. json.encode(data))
+end)
+
+RegisterNUICallback("YACA_OnError", function(data, cb)
+    if data then
+        print("[YACA-Websocket] Error: " .. data)
+    else
+        print("[YACA-Websocket] Error: unknown")
+    end
+end)
+
+RegisterNUICallback("YACA_OnConnected", function(data, cb)
+    readyState = 1
+
+    if firstConnect then
+        initRequest(storedDataObj)
+        firstConnect = false
+    else
+        TriggerServerEvent("server:yaca:wsReady", firstConnect)
+    end
+
+    print("[YACA-Websocket]: connected")
+end)
+
+RegisterNUICallback("YACA_OnDisconnected", function(data, cb)
+    readyState = 3
+
+    print("[YACA-Websocket]: client disconnected", data.code, data.reason)
+end)
+
+RegisterNUICallback("YACA_OnNuiReady", function(data, cb)
+    websocket = true
+    print("[YACA-Websocket]: NUI ready")
+
+    TriggerServerEvent('server:yaca:nuiReady')
+end)
 
 function changeVoiceRange(toggle)
     if not yacaPluginLocal.canChangeVoiceRange then
