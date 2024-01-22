@@ -1,35 +1,26 @@
-fx_version 'cerulean'
-game 'gta5'
+shared_script '@WaveShield/resource/waveshield.lua' --this line was automatically written by WaveShield
 
-description 'Yaca Voice System'
-author 'Yaca Voice Development Team'
-version '0.0.1'
-lua54 'yes'
+fx_version "adamant"
+game "gta5"
+lua54 "yes"
 
-ui_page {
-	'web/index.html'
-}
+ui_page 'web/index.html'
 
-files{
-    'web/style.css',
-    'web/yaca_system.js',
-    'web/index.html'
+files {
+    'client/*.lua',
+    'web/index.html',
+    'web/script.js',
 }
 
 shared_scripts {
-    '/shared/configuration.lua',
+    '@ox_lib/init.lua',
+    "config.lua",
 }
-
-
-server_scripts{
-    '/server/*.lua',
-    '/server/handler/*.lua',
-    '/server/yaca_entitys/*.lua',
-    '/server/threads/*.lua'
-}
-
 
 client_scripts {
-    '/client/*.lua',
-    '/client/handler/*.lua'
+    "client/*.lua"
+}
+
+server_scripts {
+    "server/*.lua"
 }
