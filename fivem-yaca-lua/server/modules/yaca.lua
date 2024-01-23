@@ -2,9 +2,9 @@ local playerVoiceSettings = {}
 local playerVoicePlugin = {}
 local playerRadioSetting = {}
 
-local YaCaServer = {}
+local YaCAServer = {}
 
-function YaCaServer.connectToVoice()
+function YaCAServer.connectToVoice()
     local src = source
 
     local name = Utils.generateRandomName(src)
@@ -28,35 +28,46 @@ function YaCaServer.connectToVoice()
         frequencies = {}
     }
 
-    YaCaServer.connect(src)
+    YaCAServer.connect(src)
 end
 
-function YaCaServer.connect(source)
+function YaCAServer.connect(source)
     if not playerVoiceSettings[source] then
+        lib.print.error("YaCA: connect: missing playerVoiceSettings", source)
         return
     end
 
     playerVoiceSettings[source].voiceFirstConnect = true
 
     TriggerClientEvent("client:yaca:init", source, {
-        suid = Settings.uniqueServerId,
-        chid = Settings.ingameChannelId,
-        deChid = Settings.defaultChannelId,
-        channelPassword = Settings.ingameChannelPassword,
+        suid = ServerSettings.uniqueServerId,
+        chid = ServerSettings.ingameChannelId,
+        deChid = ServerSettings.defaultChannelId,
+        channelPassword = ServerSettings.ingameChannelPassword,
         ingameName = playerVoiceSettings[source].ingameName,
-        useWhisper = Settings.useWhisper,
-        excludedChannels = Settings.excludedChannels,
+        useWhisper = ServerSettings.useWhisper,
+        excludedChannels = ServerSettings.excludedChannels,
     })
 end
 
-function YaCaServer.addNewPlayer(clientId)
+function YaCAServer.addNewPlayer(clientId)
     local src = source
 
     if not clientId then
+        print("YaCA: addNewPlayer: missing clientId")
         return
     end
 
-    playerVoicePlugin[src] = {
+    Player(src).state.yaca = {
+        clientId = clientId,
+        forceMuted = playerVoiceSettings[src].forceMuted,
+        range = playerVoiceSettings[src].voiceRange,
+        isTalking = false,
+        phoneCallMemberIds = playerVoiceSettings[src].phoneCallMemberIds,
+        mutedOnPhone = playerVoiceSettings[src].mutedOnPhone,
+    }
+
+    --[[  playerVoicePlugin[src] = {
         clientId = clientId,
         forceMuted = playerVoiceSettings[src].forceMuted,
         range = playerVoiceSettings[src].voiceRange,
@@ -68,7 +79,7 @@ function YaCaServer.addNewPlayer(clientId)
 
     local allPlayersData = {}
     for _, playerSource in pairs(GetPlayers()) do
-        if not playerVoicePlugin[src] or playerSource == src then
+        if not playerVoicePlugin[playerSource] or playerSource == src then
             goto continue
         end
 
@@ -77,13 +88,13 @@ function YaCaServer.addNewPlayer(clientId)
         ::continue::
     end
 
-    TriggerClientEvent("client:yaca:addPlayers", src, allPlayersData)
+    TriggerClientEvent("client:yaca:addPlayers", src, allPlayersData) ]]
 end
 
-function YaCaServer.handlePlayerDisconnect()
+function YaCAServer.handlePlayerDisconnect()
     local src = source
 
-    if not playerVoicePlugin[src] then
+    if not playerVoiceSettings[src] then
         return
     end
 
@@ -91,7 +102,22 @@ function YaCaServer.handlePlayerDisconnect()
 
     -- TODO: remove player from all radio channels
 
-    TriggerClientEvent("client:yaca:disconnect", -1, playerVoicePlugin[src].playerId)
+    playerVoiceSettings[src] = nil
+    TriggerClientEvent("client:yaca:disconnect", -1, src)
 end
 
-return YaCaServer
+function YaCAServer.wsReady()
+    local src = source
+
+    if not playerVoiceSettings[src] then
+        return
+    end
+
+    if not playerVoiceSettings[src].voiceFirstConnect then
+        return
+    end
+
+    YaCAServer.connect(src)
+end
+
+return YaCAServer

@@ -10,17 +10,20 @@ files {
     'client/modules/*.lua',
     'web/index.html',
     'web/script.js',
+    'locales/*.json',
 }
 
 shared_scripts {
     '@ox_lib/init.lua',
-    "config.lua",
+    "shared/config.lua",
 }
 
 client_scripts {
-    "client/cl_main.lua"
+    "client/enums.lua",
+    "client/client.lua"
 }
 
 server_scripts {
-    "server/sv_main.lua"
+    "server/config.lua",
+    "server/server.lua"
 }

@@ -2,7 +2,7 @@ let isConnected = false;
 let webSocket = null;
 
 function connect() {
-    console.log("connecting...");
+    console.log("[YaCA-Websocket] Trying to Connect to YaCA WebSocket...");
 
     try {
         webSocket = new window.WebSocket(`ws://127.0.0.1:30125/`);
@@ -12,39 +12,44 @@ function connect() {
     }
 
     webSocket.onmessage = (event) => {
-        console.error(event);
+        if (!event) return;
         sendNuiData("YACA_OnMessage", event.data);
     };
 
     webSocket.onerror = (event) => {
-        console.error(event);
         sendNuiData("YACA_OnError", event);
     };
 
-    webSocket.onopen = () => {
-        isConnected = true;
+    webSocket.onopen = (event) => {
+        if(!event) return;
+        console.log("connected", event);
         sendNuiData("YACA_OnConnected");
     };
 
     webSocket.onclose = (event) => {
-        console.log(event)
-        isConnected = false;
+        if (!event) return;
 
         sendNuiData("YACA_OnDisconnected", {
             code: event.code, 
             reason: event.reason
         });
 
-        connect();
+        setTimeout(() => {
+            connect();
+        }, 1000);
     }
 }
 
 function runCommand(command) {
-    if (!isConnected || typeof command !== "string") {
-        return;
+    if (!webSocket) {
+        return
     }
 
-    webSocket.send(command);
+    if (webSocket.readyState != WebSocket.OPEN) {
+        return
+    }
+
+    webSocket.send(JSON.stringify(command))
 }
 
 function sendNuiData(event, data) {
@@ -61,6 +66,14 @@ $(function () {
         sendNuiData("YACA_OnNuiReady");
     });
 
+    window.addEventListener('beforeunload', function () {
+        if (webSocket) webSocket.close();
+    });
+
+    window.addEventListener('unload', function () {
+        if (webSocket) webSocket.close();
+    }); 
+
     window.addEventListener('message', function (event) {
         switch (event.data.action) {
             case "connect":
@@ -68,6 +81,9 @@ $(function () {
                 break;
             case "command":
                 runCommand(event.data.data);
+                break;
+            case "close":
+                if (webSocket) webSocket.close();
                 break;
         }
     }, false);

@@ -10,6 +10,7 @@ Settings = {
         [7] = 30,
         [8] = 40,
     },
+    DefaultVoiceRange = 3, -- Index of the default voice range
 
     -- Max range for phone speaker in meters
     MaxPhoneSpeekerRange = 5,

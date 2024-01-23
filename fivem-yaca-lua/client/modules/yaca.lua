@@ -5,21 +5,29 @@ local YaCA = {}
 local useWhisper = false
 local firstConnect = true
 
+local yacaPluginLocal = {
+    canChangeVoiceRange = true,
+
+    lastMegaphoneState = false,
+    canUseMegaphone = false,
+}
+
+YaCA.webSocketStarted = false
 
 function YaCA.init(data)
+    lib.print.info('[YaCA-Websocket]: Connected! FirstConnect: ' .. tostring(firstConnect))
+
     if firstConnect then
-        YaCA.initRequest(data)
         firstConnect = false
+        YaCA.initRequest(data)
     else
         TriggerServerEvent('server:yaca:wsReady')
     end
-    
-    lib.print.info('[YaCA-Websocket]: connected')
 end
 
 function YaCA.initRequest(data)
     if not data or not data.suid or not data.chid or not data.deChid or not data.ingameName or not data.channelPassword then
-        return print("YaCA: initRequest: missing data") --TODO: error handling
+        return lib.print.error("YaCA: initRequest: missing data") --TODO: error handling
     end
 
     NUI.SendWSMessage({
@@ -31,7 +39,7 @@ function YaCA.initRequest(data)
         ingame_channel = data.chid,
         default_channel = data.deChid,
         ingame_channel_password = data.channelPassword,
-        exclude_channels = data.excludedChannels,
+        excluded_channels = data.excludedChannels,
         muffling_range = Settings.mufflingRange,
         build_type = YacaBuildType.RELEASE,
         unmute_delay = Settings.unmuteDelay,
@@ -41,29 +49,32 @@ function YaCA.initRequest(data)
     useWhisper = data.useWhisper
 end
 
-function YaCA.initConnection(data)
+function YaCA.initConnection(dataObj)
     -- TODO: range interval
 
-    NUI.connect(function ()
-        YaCA.initNui(data)
-    end,
-    function (errorCode, reason)
-        lib.print.info('[YaCA-Websocket]: disconnected', errorCode, reason)
-    end,
-    function (data)
-        YaCA.handleResponse(data)
-    end,
-    function (data)
-        lib.print.error('[YaCA-Websocket]: Error: ', data)
-    end)
+    if not YaCA.webSocketStarted then
+        YaCA.webSocketStarted = true
 
+        NUI.connect(function ()
+            YaCA.init(dataObj)
+        end,
+        function (errorCode, reason)
+            lib.print.info('[YaCA-Websocket]: Disconnected! Code: ' ..  errorCode .. " Reason: " .. reason)
+        end,
+        function (data)
+            YaCA.handleResponse(data)
+        end,
+        function (data)
+            lib.print.error('[YaCA-Websocket]: Error: ', data)
+        end)
+    end
     -- TODO: monitor if player is in ingame voice channel
 
     if firstConnect then
         return
     end
 
-    YaCA.initRequest(data)
+    YaCA.initRequest(dataObj)
 end
 
 function YaCA.handleResponse(payload)
@@ -71,11 +82,8 @@ function YaCA.handleResponse(payload)
         return
     end
 
-    local success, data = pcall(json.decode, payload)
-
-    if not success then
-        lib.print.error('[YaCA-Websocket]: Error while parsing message: ', data)
-        return
+    if payload.code ~= "HEARTBEAT" and payload.code ~= "WAIT_GAME_INIT" then
+        lib.print.verbose('[YaCA-Websocket] Message: ', payload.code, payload.message)
     end
 
     if payload.code == "OK" then
@@ -92,7 +100,7 @@ function YaCA.handleResponse(payload)
     end
 
     if payload.code == "TALK_STATE" or payload.code == "MUTE_STATE" then
-        YaCA.handleTalkState(data)
+        YaCA.handleTalkState(payload)
         return
     end
 
@@ -118,8 +126,8 @@ function YaCA.getPlayerByID(playerId)
     return allPlayers[playerId]
 end
 
-function YaCA.addPlayers(dataObjects)
-    if type(dataObjects) ~= "table" then
+--[[ function YaCA.addPlayers(dataObjects)
+    if not dataObjects[1] then
         dataObjects = { dataObjects }
     end
 
@@ -131,8 +139,8 @@ function YaCA.addPlayers(dataObjects)
         local currentData = YaCA.getPlayerByID(data.playerId)
 
         allPlayers[data.playerId] = {
-            remoteID = data.playerId,
-            clientID = data.clientId,
+            remoteId = data.playerId,
+            clientId = data.clientId,
             forceMuted = data.forceMuted,
             range = data.range,
             isTalking = false,
@@ -142,7 +150,7 @@ function YaCA.addPlayers(dataObjects)
 
         :: continue ::
     end
-end
+end ]]
 
 function YaCA.playerDisconnected(playerId)
     if not playerId then
@@ -154,27 +162,27 @@ end
 
 function YaCA.calcPlayers()
     local players = {}
-    local allPlayers = GetActivePlayers()
     local localPos = GetEntityCoords(cache.ped)
     local currentRoom = GetRoomKeyFromEntity(cache.ped)
 
-    local localData = YaCA.getPlayerByID(cache.serverId)
+    local localData = Statebags.getLocalData()
     if not localData then
         return
     end
 
-    for _, playerId in pairs(allPlayers) do
-        if playerId == cache.serverId then
+    for _, playerId in pairs(GetActivePlayers()) do
+        if playerId == cache.playerId then
             goto continue
         end
 
-        local playerPed = GetPlayerPed(playerId)
         local playerSource = GetPlayerServerId(playerId)
-
-        local voiceSetting = YaCA.getPlayerByID(playerSource)
-        if not voiceSetting or not voiceSetting.clientId then
+        
+        local playerState = Statebags.getPlayerData(playerSource)
+        if not playerState or not playerState.clientId then
             goto continue
         end
+        
+        local playerPed = GetPlayerPed(playerId)
 
         local muffleIntensity = 0
         if currentRoom ~= GetRoomKeyFromEntity(playerPed) and not HasEntityClearLosToEntity(cache.ped, playerPed, 17) then
@@ -182,13 +190,13 @@ function YaCA.calcPlayers()
         end
 
         players[#players + 1] = {
-            client_id = voiceSetting.clientId,
+            client_id = playerState.clientId,
             position = GetEntityCoords(playerPed),
             direction = GetEntityForwardVector(playerPed),
-            range = voiceSetting.range,
+            range = Settings.VoiceRanges[playerState.range] or 1,
             is_underwater = IsPedSwimmingUnderWater(playerPed),
             muffle_intensity = muffleIntensity,
-            is_muted = voiceSetting.forceMuted
+            is_muted = playerState.forceMuted
         }
 
         :: continue ::
@@ -201,12 +209,55 @@ function YaCA.calcPlayers()
         player = {
             player_direction = Utils.getCamDirection(),
             player_position = localPos,
-            player_range = localData.range,
+            player_range = Settings.VoiceRanges[localData.range] or 1,
             player_is_underwater = IsPedSwimmingUnderWater(cache.ped),
             player_is_muted = localData.forceMuted,
             players_list = players,
         }
     })
+end
+
+local visualVoiceRangeTick = false
+local rangeIndex = Settings.DefaultVoiceRange
+
+function YaCA.changeVoiceRange(toggle)
+    if not yacaPluginLocal.canChangeVoiceRange then
+        return false
+    end
+
+    if visualVoiceRangeTick then
+        visualVoiceRangeTick = false
+    end
+
+    rangeIndex += toggle
+
+    if rangeIndex < 1 then
+        rangeIndex = #Settings.VoiceRanges
+    elseif rangeIndex > #Settings.VoiceRanges then
+        rangeIndex = 1
+    end
+
+    local voiceRange = Settings.VoiceRanges[rangeIndex] or 1
+
+    CreateThread(function()
+        visualVoiceRangeTick = true
+        while visualVoiceRangeTick do
+            local pos = GetEntityCoords(cache.ped)
+            DrawMarker(1, pos.x, pos.y, pos.z - 0.98, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, (voiceRange * 2.0) - 1.0, (voiceRange * 2.0) - 1.0, 1.0, 136, 0, 255, 255, false, false, 0, false, nil, nil, false)
+            Wait(0)
+        end
+    end)
+
+    SetTimeout(5000, function ()
+        visualVoiceRangeTick = false
+    end)
+
+    print("Voice Range: " .. voiceRange .. "m")
+    -- TriggerServerEvent("server:yaca:changeVoiceRange", voiceRange)
+
+    Statebags.setLocalData("range", rangeIndex)
+
+    return true
 end
 
 return YaCA

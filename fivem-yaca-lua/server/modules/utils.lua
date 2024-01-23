@@ -15,7 +15,7 @@ function Utils.generateRandomName(src)
     end
 
     if not name then
-        print("YACA: Couldn't generate a random name for player " .. GetPlayerName(src) .. " (" .. src .. ")" )
+        lib.print.error("YACA: Couldn't generate a random name for player " .. GetPlayerName(src) .. " (" .. src .. ")" )
         return
     end
 
