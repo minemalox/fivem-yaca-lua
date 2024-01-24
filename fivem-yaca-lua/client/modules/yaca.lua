@@ -418,4 +418,14 @@ function YaCA.useMegaphone(state)
     TriggerServerEvent("server:yaca:useMegaphone", state)
 end
 
+function YaCA.forceMuteClient(targetSrc, isMuted)
+    local playerData = YaCA.getPlayerByID(targetSrc)
+
+    if not playerData then
+        return
+    end
+
+    playerData.forceMuted = isMuted
+end
+
 return YaCA

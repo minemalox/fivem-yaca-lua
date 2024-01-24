@@ -161,4 +161,15 @@ function YaCAServer.useMegaphone(state)
     Player(src).state:set('yaca_megaphone', state and Settings.MegaphoneRange or nil, true)
 end
 
+function YaCAServer.changePlayerAliveStatus(isAlive)
+    local src = source
+
+    if not playerVoiceSettings[src] then
+        return
+    end
+
+    playerVoiceSettings[src].forceMuted = not isAlive
+    TriggerClientEvent("client:yaca:forceMuteClient", -1, src, playerVoiceSettings[src].forceMuted)
+end
+
 return YaCAServer
