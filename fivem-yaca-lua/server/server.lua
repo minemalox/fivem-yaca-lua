@@ -13,3 +13,9 @@ AddEventHandler('playerDropped', YaCaServer.handlePlayerDisconnect)
 
 exports('changePlayerAliveStatus', YaCaServer.changePlayerAliveStatus)
 exports('SetPlayerAlive', YaCaServer.changePlayerAliveStatus)
+
+if Settings.Debug then
+    RegisterCommand('setAlive', function(source, args)
+        YaCaServer.changePlayerAliveStatus(source, args[1] == 'true')
+    end, true)
+end
