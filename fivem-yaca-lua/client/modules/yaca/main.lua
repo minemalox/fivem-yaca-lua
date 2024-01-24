@@ -46,7 +46,7 @@ function YaCAClientModule.initRequest(data)
         ingame_channel_password = data.channelPassword,
         excluded_channels = data.excludedChannels,
         muffling_range = Settings.mufflingRange,
-        build_type = YaCAClientModuleBuildType.RELEASE,
+        build_type = YacaBuildType.RELEASE,
         unmute_delay = Settings.unmuteDelay,
         operation_mode = data.useWhisper and 1 or 0,
     })
@@ -80,6 +80,16 @@ function YaCAClientModule.initConnection(dataObj)
     end
 
     YaCAClientModule.initRequest(dataObj)
+end
+
+function YaCAClientModule.isPluginInitialized()
+    local inited = YaCAClientModule.getPlayerByID(cache.serverId) ~= nil
+
+    if not inited then
+        Utils.radarNotification(locale('plugin_not_initialized'))
+    end
+
+    return inited
 end
 
 function YaCAClientModule.handleResponse(payload)
@@ -346,7 +356,7 @@ function YaCAClientModule.setPlayersCommType(players, commType, state, channel, 
 end
 
 function YaCAClientModule.isCommTypeValid(commType)
-    local valid = YaCAClientModuleFilterEnum[commType]
+    local valid = YacaFilterEnum[commType]
     if not valid then
         lib.print.error("[YaCAClientModule-Websocket]: Invalid commtype: " .. commType)
         return false
