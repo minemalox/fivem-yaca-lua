@@ -15,6 +15,8 @@ RegisterNetEvent('client:yaca:disconnect', YaCAMain.playerDisconnected)
 RegisterNetEvent('client:yaca:changeVoiceRange', YaCAMain.changeVoiceRange)
 RegisterNetEvent('client:yaca:muteTarget', YaCAMain.muteTarget)
 
+RegisterNetEvent('client:yaca:setRadioFreq', YaCARadio.setRadioFrequency)
+
 CreateThread(function()
     while true do
         Wait(250)

@@ -3,7 +3,6 @@ local allPlayers = {}
 local YaCAClientModule = {}
 
 local isTalking = false
-local useWhisper = false
 local firstConnect = true
 
 local YaCAClientModulePluginLocal = {
@@ -16,6 +15,7 @@ local isPlayerMuted = false
 
 YaCAClientModule.webSocketStarted = false
 YaCAClientModule.canUseMegaphone = false
+YaCAClientModule.useWhisper = false
 
 LocalPlayer.state:set('YaCAClientModule_megaphone', false, true)
 
@@ -51,7 +51,7 @@ function YaCAClientModule.initRequest(data)
         operation_mode = data.useWhisper and 1 or 0,
     })
 
-    useWhisper = data.useWhisper
+    YaCAClientModule.useWhisper = data.useWhisper
 end
 
 function YaCAClientModule.initConnection(dataObj)
