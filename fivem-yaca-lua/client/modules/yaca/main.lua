@@ -426,4 +426,32 @@ function YaCAClientModule.muteTarget(target, isMuted)
     playerData.forceMuted = isMuted
 end
 
+function YaCAClientModule.addRemovePlayerIntercomFilter(targetIds, state)
+    local playersToRemove = {}
+    local playersToAdd = {}
+
+    for _, targetId in pairs(targetIds) do
+        local playerData = YaCAClientModule.getPlayerByID(targetId)
+        if not playerData then
+            goto continue
+        end
+
+        if state then
+            playersToAdd[#playersToAdd + 1] = playerData.clientId
+        else
+            playersToRemove[#playersToRemove + 1] = playerData.clientId
+        end
+
+        ::continue::
+    end
+
+    if #playersToRemove > 0 then
+        YaCAClientModule.setPlayersCommType(playersToRemove, YacaFilterEnum.INTERCOM, false)
+    end
+
+    if #playersToAdd > 0 then
+        YaCAClientModule.setPlayersCommType(playersToAdd, YacaFilterEnum.INTERCOM, true)
+    end
+end
+
 return YaCAClientModule

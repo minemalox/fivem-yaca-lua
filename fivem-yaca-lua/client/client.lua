@@ -17,6 +17,8 @@ RegisterNetEvent('client:yaca:muteTarget', YaCAMain.muteTarget)
 
 RegisterNetEvent('client:yaca:setRadioFreq', YaCARadio.setRadioFrequency)
 
+RegisterNetEvent('client:yaca:addRemovePlayerIntercomFilter', YaCAMain.addRemovePlayerIntercomFilter)
+
 CreateThread(function()
     while true do
         Wait(250)
