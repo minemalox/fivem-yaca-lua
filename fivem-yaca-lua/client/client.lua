@@ -137,4 +137,14 @@ if Settings.Debug then
     RegisterCommand('changeRadioChannelStereo', function(source, args)
         YaCARadio.changeRadioChannelStereo()
     end, false)
+
+    RegisterCommand('enableIntercom', function (source, args)
+        YaCAMain.addRemovePlayerIntercomFilter({args[1], args[2]}, args[3] == 'true')
+    end, false)
+
+    RegisterCommand('disableIntercom', function (source, args)
+        YaCAMain.addRemovePlayerIntercomFilter({args[1], args[2]}, args[3] == 'false')
+    end, false)
+
+
 end
