@@ -10,3 +10,6 @@ RegisterNetEvent('server:yaca:changeVoiceRange', YaCaServer.changeVoiceRange)
 RegisterNetEvent('server:yaca:useMegaphone', YaCaServer.useMegaphone)
 
 AddEventHandler('playerDropped', YaCaServer.handlePlayerDisconnect)
+
+exports('changePlayerAliveStatus', YaCaServer.changePlayerAliveStatus)
+exports('SetPlayerAlive', YaCaServer.changePlayerAliveStatus)

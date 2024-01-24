@@ -12,6 +12,7 @@ RegisterNetEvent('client:yaca:init', YaCA.initConnection)
 RegisterNetEvent('client:yaca:addPlayers', YaCA.addPlayers)
 RegisterNetEvent('client:yaca:disconnect', YaCA.playerDisconnected)
 RegisterNetEvent('client:yaca:changeVoiceRange', YaCA.changeVoiceRange)
+RegisterNetEvent('client:yaca:changePlayerAliveStatus', YaCA.changePlayerAliveStatus)
 
 CreateThread(function()
     while true do
