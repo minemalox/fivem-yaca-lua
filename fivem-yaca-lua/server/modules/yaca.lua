@@ -128,7 +128,7 @@ function YaCAServer.changeVoiceRange(rangeIndex)
     local range = Settings.VoiceRanges[rangeIndex] or 1
 
     playerVoiceSettings[src].voiceRange = range
-    TriggerClientEvent("client:yaca:changeVoiceRange", -1, range)
+    TriggerClientEvent("client:yaca:changeVoiceRange", -1, src, range)
 
     if not playerVoicePlugin[src] then
         return

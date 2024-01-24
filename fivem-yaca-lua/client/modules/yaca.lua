@@ -294,8 +294,6 @@ function YaCA.changeVoiceRange(target, range)
     end
 
     playerData.range = range
-
-    print(target, range)
 end
 
 function YaCA.setPlayersCommType(players, commType, state, channel, range, ownMode, otherPlayersMode)
