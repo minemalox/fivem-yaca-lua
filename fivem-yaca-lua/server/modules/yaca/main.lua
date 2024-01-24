@@ -1,8 +1,11 @@
 local playerVoiceSettings = {}
 local playerVoicePlugin = {}
-local playerRadioSetting = {}
 
 local YaCAServerModule = {}
+
+function YaCAServerModule.getPlayerPlugin(src)
+    return playerVoicePlugin[src]
+end
 
 function YaCAServerModule.connectToVoice()
     local src = source
@@ -20,12 +23,7 @@ function YaCAServerModule.connectToVoice()
         mutedOnPhone = false,
     }
 
-    playerRadioSetting[src] = {
-        activated = false,
-        currentChannel = 1,
-        hasLong = false,
-        frequencies = {}
-    }
+    YaCAServerRadio.initRadioSettings(src)
 
     YaCAServerModule.connect(src)
 end

@@ -53,6 +53,18 @@ local megaphoneKeybind = lib.addKeybind({
     end
 })
 
+local radioKeybind = lib.addKeybind({
+    name = 'yaca:radioTalking',
+    description = locale('radio_talk_description'),
+    defaultKey = Settings.DefaultKeybinds.radioTalking,
+    onPressed = function (self)
+        YaCARadio.radioTalkingStart(true)
+    end,
+    onReleased = function(self)
+        YaCARadio.radioTalkingStart(false)
+    end
+})
+
 lib.onCache('vehicle', function (vehicle)
     if not vehicle then
         YaCAMain.useMegaphone(false)
@@ -94,3 +106,33 @@ AddStateBagChangeHandler('yaca_megaphone', nil, function (bagName, key, value, _
     )
     YaCAMain.setCommDeviceVolume(YacaFilterEnum.MEGAPHONE, 1.0)
 end)
+
+if Settings.Debug then
+    RegisterCommand('enableRadio', function()
+        YaCARadio.enableRadio(true)
+    end, false)
+
+    RegisterCommand('disableRadio', function()
+        YaCARadio.enableRadio(false)
+    end, false)
+
+    RegisterCommand('changeRadioFrequency', function(source, args)
+        YaCARadio.changeRadioFrequency(args[1])
+    end, false)
+
+    RegisterCommand('muteRadioChannel', function()
+        YaCARadio.muteRadioChannel()
+    end, false)
+
+    RegisterCommand('changeActiveRadioChannel', function(source, args)
+        YaCARadio.changeActiveRadioChannel(args[1])
+    end, false)
+
+    RegisterCommand('changeRadioChannelVolume', function(source, args)
+        YaCARadio.changeRadioChannelVolume(args[1])
+    end, false)
+
+    RegisterCommand('changeRadioChannelStereo', function(source, args)
+        YaCARadio.changeRadioChannelStereo()
+    end, false)
+end

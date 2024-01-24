@@ -7,7 +7,7 @@ lua54 "yes"
 ui_page 'web/index.html'
 
 files {
-    'client/modules/*.lua',
+    'client/modules/**/*.lua',
     'web/index.html',
     'web/script.js',
     'locales/*.json',
