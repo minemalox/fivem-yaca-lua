@@ -118,12 +118,14 @@ function YaCAServer.wsReady()
     YaCAServer.connect(src)
 end
 
-function YaCAServer.changeVoiceRange(range)
+function YaCAServer.changeVoiceRange(rangeIndex)
     local src = source
 
     if not playerVoiceSettings[src] then
         return
     end
+
+    local range = Settings.VoiceRanges[rangeIndex] or 1
 
     playerVoiceSettings[src].voiceRange = range
     TriggerClientEvent("client:yaca:changeVoiceRange", -1, range)
@@ -156,7 +158,7 @@ function YaCAServer.useMegaphone(state)
         return
     end
 
-    Player(src).state:set('yaca_megaphone', state, true)
+    Player(src).state:set('yaca_megaphone', state and Settings.MegaphoneRange or nil, true)
 end
 
 return YaCAServer

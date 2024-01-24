@@ -50,7 +50,7 @@ local megaphoneKeybind = lib.addKeybind({
 })
 
 lib.onCache('vehicle', function (vehicle)
-    if vehicle then
+    if not vehicle then
         YaCA.useMegaphone(false)
     else
         local vehicleClass = GetVehicleClass(vehicle)
@@ -62,4 +62,34 @@ lib.onCache('vehicle', function (vehicle)
         end
     end
 
+    print(YaCA.canUseMegaphone)
+end)
+
+AddStateBagChangeHandler('yaca_megaphone', nil, function (bagName, key, value, _, replicated)
+    print('yaca_megaphone', bagName, key, value, replicated)
+    if replicated then
+        return
+    end
+
+    local player = GetPlayerFromStateBagName(bagName)
+
+    print(player)
+
+    if not player or player == 0 then
+        return
+    end
+
+    local serverId = GetPlayerServerId(player)
+
+    local isOwnPlayer = serverId == cache.serverId
+    YaCA.setPlayersCommType(
+        isOwnPlayer and {} or YaCA.getPlayerByID(serverId),
+        YacaFilterEnum.MEGAPHONE,
+        value ~= nil,
+        nil,
+        value,
+        isOwnPlayer and CommDeviceMode.SENDER or CommDeviceMode.RECEIVER,
+        isOwnPlayer and CommDeviceMode.RECEIVER or CommDeviceMode.SENDER
+    )
+    YaCA.setCommDeviceVolume(YacaFilterEnum.MEGAPHONE, 1.0)
 end)

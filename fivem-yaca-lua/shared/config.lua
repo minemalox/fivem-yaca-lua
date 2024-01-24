@@ -16,6 +16,7 @@ Settings = {
 
     -- Max range for phone speaker in meters
     MaxPhoneSpeekerRange = 5,
+    MegaphoneRange = 30,
 
     --[[ 
         * default are 2 meters
@@ -28,5 +29,6 @@ Settings = {
 
     DefaultKeybinds = {
         changeVoiceRange = 'Y',
+        useMegaphone = 'N'
     }
 }

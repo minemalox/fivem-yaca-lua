@@ -17,6 +17,8 @@ local isPlayerMuted = false
 YaCA.webSocketStarted = false
 YaCA.canUseMegaphone = false
 
+LocalPlayer.state:set('yaca_megaphone', false, true)
+
 function YaCA.init(data)
     lib.print.info('[YaCA-Websocket]: Connected! FirstConnect: ' .. tostring(firstConnect))
 
@@ -292,9 +294,11 @@ function YaCA.changeVoiceRange(target, range)
     end
 
     playerData.range = range
+
+    print(target, range)
 end
 
-function YaCA.setPlayersCommType(players, type, state, channel, range, ownMode, otherPlayersMode)
+function YaCA.setPlayersCommType(players, commType, state, channel, range, ownMode, otherPlayersMode)
     if type(players) ~= "table" then
         return
     end
@@ -323,7 +327,7 @@ function YaCA.setPlayersCommType(players, type, state, channel, range, ownMode, 
 
     local protocal = {
         on = state and true or false,
-        comm_type = type,
+        comm_type = commType,
         members = cids,
     }
 
@@ -339,27 +343,27 @@ function YaCA.setPlayersCommType(players, type, state, channel, range, ownMode, 
         base = {
             request_type = "INGAME",
         },
-        communication = protocal,
+        comm_device = protocal,
     })
 end
 
-function YaCA.isCommTypeValid(type)
-    local valid = YacaFilterEnum[type]
+function YaCA.isCommTypeValid(commType)
+    local valid = YacaFilterEnum[commType]
     if not valid then
-        lib.print.error("[YaCA-Websocket]: Invalid commtype: " .. type)
+        lib.print.error("[YaCA-Websocket]: Invalid commtype: " .. commType)
         return false
     end
 
     return true
 end
 
-function YaCA.setCommDeviceVolume(type, volume, channel)
-    if not YaCA.isCommTypeValid(type) then
+function YaCA.setCommDeviceVolume(commType, volume, channel)
+    if not YaCA.isCommTypeValid(commType) then
         return
     end
 
     local protocal = {
-        comm_type = type,
+        comm_type = commType,
         volume = math.clamp(volume, 0, 1),
     }
 
@@ -375,13 +379,13 @@ function YaCA.setCommDeviceVolume(type, volume, channel)
     })
 end
 
-function YaCA.setCommDeviceStereomode(type, mode, channel)
-    if not YaCA.isCommTypeValid(type) then
+function YaCA.setCommDeviceStereomode(commType, mode, channel)
+    if not YaCA.isCommTypeValid(commType) then
         return
     end
 
     local protocal = {
-        comm_type = type,
+        comm_type = commType,
         stereo_mode = mode,
     }
 
@@ -399,6 +403,8 @@ end
 
 function YaCA.useMegaphone(state)
     state = state or false
+
+    print("useMegaphone: " .. tostring(state), yacaPluginLocal.lastMegaphoneState, YaCA.canUseMegaphone)
 
     if not cache.vehicle or cache.vehicle == 0 then
         return
