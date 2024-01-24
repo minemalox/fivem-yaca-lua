@@ -1,12 +1,12 @@
 local allPlayers = {}
 
-local YaCA = {}
+local YaCAClientModule = {}
 
 local isTalking = false
 local useWhisper = false
 local firstConnect = true
 
-local yacaPluginLocal = {
+local YaCAClientModulePluginLocal = {
     canChangeVoiceRange = true,
 
     lastMegaphoneState = false,
@@ -14,25 +14,25 @@ local yacaPluginLocal = {
 }
 local isPlayerMuted = false
 
-YaCA.webSocketStarted = false
-YaCA.canUseMegaphone = false
+YaCAClientModule.webSocketStarted = false
+YaCAClientModule.canUseMegaphone = false
 
-LocalPlayer.state:set('yaca_megaphone', false, true)
+LocalPlayer.state:set('YaCAClientModule_megaphone', false, true)
 
-function YaCA.init(data)
-    lib.print.info('[YaCA-Websocket]: Connected! FirstConnect: ' .. tostring(firstConnect))
+function YaCAClientModule.init(data)
+    lib.print.info('[YaCAClientModule-Websocket]: Connected! FirstConnect: ' .. tostring(firstConnect))
 
     if firstConnect then
         firstConnect = false
-        YaCA.initRequest(data)
+        YaCAClientModule.initRequest(data)
     else
-        TriggerServerEvent('server:yaca:wsReady')
+        TriggerServerEvent('server:YaCAClientModule:wsReady')
     end
 end
 
-function YaCA.initRequest(data)
+function YaCAClientModule.initRequest(data)
     if not data or not data.suid or not data.chid or not data.deChid or not data.ingameName or not data.channelPassword then
-        return lib.print.error("YaCA: initRequest: missing data") --TODO: error handling
+        return lib.print.error("YaCAClientModule: initRequest: missing data") --TODO: error handling
     end
 
     NUI.SendWSMessage({
@@ -46,7 +46,7 @@ function YaCA.initRequest(data)
         ingame_channel_password = data.channelPassword,
         excluded_channels = data.excludedChannels,
         muffling_range = Settings.mufflingRange,
-        build_type = YacaBuildType.RELEASE,
+        build_type = YaCAClientModuleBuildType.RELEASE,
         unmute_delay = Settings.unmuteDelay,
         operation_mode = data.useWhisper and 1 or 0,
     })
@@ -54,23 +54,23 @@ function YaCA.initRequest(data)
     useWhisper = data.useWhisper
 end
 
-function YaCA.initConnection(dataObj)
+function YaCAClientModule.initConnection(dataObj)
     -- TODO: range interval
 
-    if not YaCA.webSocketStarted then
-        YaCA.webSocketStarted = true
+    if not YaCAClientModule.webSocketStarted then
+        YaCAClientModule.webSocketStarted = true
 
         NUI.connect(function ()
-            YaCA.init(dataObj)
+            YaCAClientModule.init(dataObj)
         end,
         function (errorCode, reason)
-            lib.print.info('[YaCA-Websocket]: Disconnected! Code: ' ..  errorCode .. " Reason: " .. reason)
+            lib.print.info('[YaCAClientModule-Websocket]: Disconnected! Code: ' ..  errorCode .. " Reason: " .. reason)
         end,
         function (data)
-            YaCA.handleResponse(data)
+            YaCAClientModule.handleResponse(data)
         end,
         function (data)
-            lib.print.error('[YaCA-Websocket]: Error: ', data)
+            lib.print.error('[YaCAClientModule-Websocket]: Error: ', data)
         end)
     end
     -- TODO: monitor if player is in ingame voice channel
@@ -79,21 +79,21 @@ function YaCA.initConnection(dataObj)
         return
     end
 
-    YaCA.initRequest(dataObj)
+    YaCAClientModule.initRequest(dataObj)
 end
 
-function YaCA.handleResponse(payload)
+function YaCAClientModule.handleResponse(payload)
     if not payload then
         return
     end
 
     if payload.code ~= "HEARTBEAT" and payload.code ~= "WAIT_GAME_INIT" then
-        lib.print.verbose('[YaCA-Websocket] Message: ', payload.code, payload.message)
+        lib.print.verbose('[YaCAClientModule-Websocket] Message: ', payload.code, payload.message)
     end
 
     if payload.code == "OK" then
         if payload.requestType == "JOIN" then
-            TriggerServerEvent("server:yaca:addPlayer", tonumber(payload.message))
+            TriggerServerEvent("server:YaCAClientModule:addPlayer", tonumber(payload.message))
 
             -- TODO: Range interval neustarten
 
@@ -105,25 +105,25 @@ function YaCA.handleResponse(payload)
     end
 
     if payload.code == "TALK_STATE" or payload.code == "MUTE_STATE" then
-        YaCA.handleTalkState(payload)
+        YaCAClientModule.handleTalkState(payload)
         return
     end
 
     local message = locale(payload.code) or "Unknown error!"
     if not locale(payload.code) then
-        lib.print.error('[YaCA-Websocket]: Unknown error code: ', payload.code)
+        lib.print.error('[YaCAClientModule-Websocket]: Unknown error code: ', payload.code)
     end
     if #message < 1 then
         return
     end
 
     BeginTextCommandThefeedPost("STRING")
-    AddTextComponentSubstringPlayerName("YaCA: " .. message)
+    AddTextComponentSubstringPlayerName("YaCAClientModule: " .. message)
     ThefeedSetNextPostBackgroundColor(6)
     EndTextCommandThefeedPostTicker(false, false)
 end
 
-function YaCA.handleTalkState(payload)
+function YaCAClientModule.handleTalkState(payload)
     local localIsTalking = not isPlayerMuted and not not tonumber(payload.message)
 
     if isTalking ~= localIsTalking then
@@ -139,11 +139,11 @@ function YaCA.handleTalkState(payload)
     end
 end
 
-function YaCA.getPlayerByID(playerId)
+function YaCAClientModule.getPlayerByID(playerId)
     return allPlayers[playerId]
 end
 
-function YaCA.addPlayers(dataObjects)
+function YaCAClientModule.addPlayers(dataObjects)
     if not dataObjects[1] then
         dataObjects = { dataObjects }
     end
@@ -153,7 +153,7 @@ function YaCA.addPlayers(dataObjects)
             goto continue
         end
 
-        local currentData = YaCA.getPlayerByID(data.playerId)
+        local currentData = YaCAClientModule.getPlayerByID(data.playerId)
 
         allPlayers[data.playerId] = {
             remoteId = data.playerId,
@@ -169,7 +169,7 @@ function YaCA.addPlayers(dataObjects)
     end
 end
 
-function YaCA.playerDisconnected(playerId)
+function YaCAClientModule.playerDisconnected(playerId)
     if not playerId then
         return
     end
@@ -177,7 +177,7 @@ function YaCA.playerDisconnected(playerId)
     allPlayers[playerId] = nil
 end
 
-function YaCA.calcPlayers()
+function YaCAClientModule.calcPlayers()
     local players = {}
     local localPos = GetEntityCoords(cache.ped)
     local currentRoom = GetRoomKeyFromEntity(cache.ped)
@@ -187,7 +187,7 @@ function YaCA.calcPlayers()
         return
     end ]]
 
-    local localData = YaCA.getPlayerByID(cache.serverId)
+    local localData = YaCAClientModule.getPlayerByID(cache.serverId)
     if not localData then
         return
     end
@@ -204,7 +204,7 @@ function YaCA.calcPlayers()
             goto continue
         end ]]
 
-        local playerState = YaCA.getPlayerByID(playerSource)
+        local playerState = YaCAClientModule.getPlayerByID(playerSource)
         if not playerState or not playerState.clientId then
             goto continue
         end
@@ -247,8 +247,8 @@ end
 local visualVoiceRangeTick = false
 local rangeIndex = Settings.DefaultVoiceRange
 
-function YaCA.changeMyVoiceRange(toggle)
-    if not yacaPluginLocal.canChangeVoiceRange then
+function YaCAClientModule.changeMyVoiceRange(toggle)
+    if not YaCAClientModulePluginLocal.canChangeVoiceRange then
         return false
     end
 
@@ -280,15 +280,15 @@ function YaCA.changeMyVoiceRange(toggle)
     end)
 
     print("Voice Range: " .. voiceRange .. "m")
-    TriggerServerEvent("server:yaca:changeVoiceRange", rangeIndex)
+    TriggerServerEvent("server:YaCAClientModule:changeVoiceRange", rangeIndex)
 
     -- Statebags.setLocalData("range", rangeIndex)
 
     return true
 end
 
-function YaCA.changeVoiceRange(target, range)
-    local playerData = YaCA.getPlayerByID(target)
+function YaCAClientModule.changeVoiceRange(target, range)
+    local playerData = YaCAClientModule.getPlayerByID(target)
     if not playerData then
         return
     end
@@ -296,21 +296,21 @@ function YaCA.changeVoiceRange(target, range)
     playerData.range = range
 end
 
-function YaCA.setPlayersCommType(players, commType, state, channel, range, ownMode, otherPlayersMode)
+function YaCAClientModule.setPlayersCommType(players, commType, state, channel, range, ownMode, otherPlayersMode)
     if type(players) ~= "table" then
-        return
+        players = { players }
     end
 
     local cids = {}
     if ownMode then
         cids[#cids + 1] = {
-            client_id = YaCA.getPlayerByID(cache.serverId).clientId,
+            client_id = YaCAClientModule.getPlayerByID(cache.serverId).clientId,
             mode = ownMode,
         }
     end
 
     for _, player in pairs(players) do
-        local playerData = YaCA.getPlayerByID(player)
+        local playerData = YaCAClientModule.getPlayerByID(player)
         if not playerData then
             goto continue
         end
@@ -345,18 +345,18 @@ function YaCA.setPlayersCommType(players, commType, state, channel, range, ownMo
     })
 end
 
-function YaCA.isCommTypeValid(commType)
-    local valid = YacaFilterEnum[commType]
+function YaCAClientModule.isCommTypeValid(commType)
+    local valid = YaCAClientModuleFilterEnum[commType]
     if not valid then
-        lib.print.error("[YaCA-Websocket]: Invalid commtype: " .. commType)
+        lib.print.error("[YaCAClientModule-Websocket]: Invalid commtype: " .. commType)
         return false
     end
 
     return true
 end
 
-function YaCA.setCommDeviceVolume(commType, volume, channel)
-    if not YaCA.isCommTypeValid(commType) then
+function YaCAClientModule.setCommDeviceVolume(commType, volume, channel)
+    if not YaCAClientModule.isCommTypeValid(commType) then
         return
     end
 
@@ -377,8 +377,8 @@ function YaCA.setCommDeviceVolume(commType, volume, channel)
     })
 end
 
-function YaCA.setCommDeviceStereomode(commType, mode, channel)
-    if not YaCA.isCommTypeValid(commType) then
+function YaCAClientModule.setCommDeviceStereomode(commType, mode, channel)
+    if not YaCAClientModule.isCommTypeValid(commType) then
         return
     end
 
@@ -399,25 +399,25 @@ function YaCA.setCommDeviceStereomode(commType, mode, channel)
     })
 end
 
-function YaCA.useMegaphone(state)
+function YaCAClientModule.useMegaphone(state)
     state = state or false
 
-    print("useMegaphone: " .. tostring(state), yacaPluginLocal.lastMegaphoneState, YaCA.canUseMegaphone)
+    print("useMegaphone: " .. tostring(state), YaCAClientModulePluginLocal.lastMegaphoneState, YaCAClientModule.canUseMegaphone)
 
     if not cache.vehicle or cache.vehicle == 0 then
         return
     end
 
-    if not YaCA.canUseMegaphone or yacaPluginLocal.lastMegaphoneState == state then
+    if not YaCAClientModule.canUseMegaphone or YaCAClientModulePluginLocal.lastMegaphoneState == state then
         return
     end
 
-    yacaPluginLocal.lastMegaphoneState = state
-    TriggerServerEvent("server:yaca:useMegaphone", state)
+    YaCAClientModulePluginLocal.lastMegaphoneState = state
+    TriggerServerEvent("server:YaCAClientModule:useMegaphone", state)
 end
 
-function YaCA.forceMuteClient(targetSrc, isMuted)
-    local playerData = YaCA.getPlayerByID(targetSrc)
+function YaCAClientModule.muteTarget(target, isMuted)
+    local playerData = YaCAClientModule.getPlayerByID(target)
 
     if not playerData then
         return
@@ -426,4 +426,4 @@ function YaCA.forceMuteClient(targetSrc, isMuted)
     playerData.forceMuted = isMuted
 end
 
-return YaCA
+return YaCAClientModule

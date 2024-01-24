@@ -4,21 +4,22 @@ math = lib.math
 Statebags = require 'client.modules.statebags'
 Utils = require 'client.modules.utils'
 NUI = require 'client.modules.nui'
-YaCA = require 'client.modules.yaca'
+YaCAMain = require 'client.modules.yaca.main'
+YaCARadio = require 'client.modules.yaca.radio'
 
 NUI.initNUICallbacks()
 
-RegisterNetEvent('client:yaca:init', YaCA.initConnection)
-RegisterNetEvent('client:yaca:addPlayers', YaCA.addPlayers)
-RegisterNetEvent('client:yaca:disconnect', YaCA.playerDisconnected)
-RegisterNetEvent('client:yaca:changeVoiceRange', YaCA.changeVoiceRange)
-RegisterNetEvent('client:yaca:changePlayerAliveStatus', YaCA.changePlayerAliveStatus)
+RegisterNetEvent('client:yaca:init', YaCAMain.initConnection)
+RegisterNetEvent('client:yaca:addPlayers', YaCAMain.addPlayers)
+RegisterNetEvent('client:yaca:disconnect', YaCAMain.playerDisconnected)
+RegisterNetEvent('client:yaca:changeVoiceRange', YaCAMain.changeVoiceRange)
+RegisterNetEvent('client:yaca:muteTarget', YaCAMain.muteTarget)
 
 CreateThread(function()
     while true do
         Wait(250)
         if NUI.WebsocketConnected then
-            YaCA.calcPlayers()
+            YaCAMain.calcPlayers()
         end
     end
 end)
@@ -34,7 +35,7 @@ local changeVoiceRangeKeybind = lib.addKeybind({
     description = locale('change_voice_range_description'),
     defaultKey = Settings.DefaultKeybinds.changeVoiceRange,
     onReleased = function(self)
-        YaCA.changeMyVoiceRange(1)
+        YaCAMain.changeMyVoiceRange(1)
     end
 })
 
@@ -43,31 +44,28 @@ local megaphoneKeybind = lib.addKeybind({
     description = locale('use_megaphone_description'),
     defaultKey = Settings.DefaultKeybinds.useMegaphone,
     onPressed = function (self)
-        YaCA.useMegaphone(true)
+        YaCAMain.useMegaphone(true)
     end,
     onReleased = function(self)
-        YaCA.useMegaphone(false)
+        YaCAMain.useMegaphone(false)
     end
 })
 
 lib.onCache('vehicle', function (vehicle)
     if not vehicle then
-        YaCA.useMegaphone(false)
+        YaCAMain.useMegaphone(false)
     else
         local vehicleClass = GetVehicleClass(vehicle)
 
         if vehicleClass == 18 or vehicleClass == 19 then
-            YaCA.canUseMegaphone = true
+            YaCAMain.canUseMegaphone = true
         else
-            YaCA.canUseMegaphone = false
+            YaCAMain.canUseMegaphone = false
         end
     end
-
-    print(YaCA.canUseMegaphone)
 end)
 
 AddStateBagChangeHandler('yaca_megaphone', nil, function (bagName, key, value, _, replicated)
-    print('yaca_megaphone', bagName, key, value, replicated)
     if replicated then
         return
     end
@@ -83,8 +81,8 @@ AddStateBagChangeHandler('yaca_megaphone', nil, function (bagName, key, value, _
     local serverId = GetPlayerServerId(player)
 
     local isOwnPlayer = serverId == cache.serverId
-    YaCA.setPlayersCommType(
-        isOwnPlayer and {} or YaCA.getPlayerByID(serverId),
+    YaCAMain.setPlayersCommType(
+        isOwnPlayer and {} or YaCAMain.getPlayerByID(serverId),
         YacaFilterEnum.MEGAPHONE,
         value ~= nil,
         nil,
@@ -92,5 +90,5 @@ AddStateBagChangeHandler('yaca_megaphone', nil, function (bagName, key, value, _
         isOwnPlayer and CommDeviceMode.SENDER or CommDeviceMode.RECEIVER,
         isOwnPlayer and CommDeviceMode.RECEIVER or CommDeviceMode.SENDER
     )
-    YaCA.setCommDeviceVolume(YacaFilterEnum.MEGAPHONE, 1.0)
+    YaCAMain.setCommDeviceVolume(YacaFilterEnum.MEGAPHONE, 1.0)
 end)

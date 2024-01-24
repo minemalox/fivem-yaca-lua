@@ -30,5 +30,8 @@ Settings = {
     DefaultKeybinds = {
         changeVoiceRange = 'Y',
         useMegaphone = 'N'
-    }
+    },
+
+    -- Max amount of radio channels
+    MaxRadioChannels = 9
 }

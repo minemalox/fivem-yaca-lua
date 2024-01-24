@@ -2,9 +2,9 @@ local playerVoiceSettings = {}
 local playerVoicePlugin = {}
 local playerRadioSetting = {}
 
-local YaCAServer = {}
+local YaCAServerModule = {}
 
-function YaCAServer.connectToVoice()
+function YaCAServerModule.connectToVoice()
     local src = source
 
     local name = Utils.generateRandomName(src)
@@ -27,10 +27,10 @@ function YaCAServer.connectToVoice()
         frequencies = {}
     }
 
-    YaCAServer.connect(src)
+    YaCAServerModule.connect(src)
 end
 
-function YaCAServer.connect(source)
+function YaCAServerModule.connect(source)
     if not playerVoiceSettings[source] then
         lib.print.error("YaCA: connect: missing playerVoiceSettings", source)
         return
@@ -49,7 +49,7 @@ function YaCAServer.connect(source)
     })
 end
 
-function YaCAServer.addNewPlayer(clientId)
+function YaCAServerModule.addNewPlayer(clientId)
     local src = source
 
     if not clientId then
@@ -93,7 +93,7 @@ function YaCAServer.addNewPlayer(clientId)
     TriggerClientEvent("client:yaca:addPlayers", src, allPlayersData)
 end
 
-function YaCAServer.handlePlayerDisconnect()
+function YaCAServerModule.handlePlayerDisconnect()
     local src = source
 
     if not playerVoiceSettings[src] then
@@ -108,17 +108,17 @@ function YaCAServer.handlePlayerDisconnect()
     TriggerClientEvent("client:yaca:disconnect", -1, src)
 end
 
-function YaCAServer.wsReady()
+function YaCAServerModule.wsReady()
     local src = source
 
     if not playerVoiceSettings[src] or not playerVoiceSettings[src].voiceFirstConnect then
         return
     end
 
-    YaCAServer.connect(src)
+    YaCAServerModule.connect(src)
 end
 
-function YaCAServer.changeVoiceRange(rangeIndex)
+function YaCAServerModule.changeVoiceRange(rangeIndex)
     local src = source
 
     if not playerVoiceSettings[src] then
@@ -137,7 +137,7 @@ function YaCAServer.changeVoiceRange(rangeIndex)
     playerVoicePlugin[src].range = range
 end
 
-function YaCAServer.useMegaphone(state)
+function YaCAServerModule.useMegaphone(state)
     local src = source
 
     local megaphoneState = Player(src).state['yaca_megaphone']
@@ -161,13 +161,13 @@ function YaCAServer.useMegaphone(state)
     Player(src).state:set('yaca_megaphone', state and Settings.MegaphoneRange or nil, true)
 end
 
-function YaCAServer.changePlayerAliveStatus(source, isAlive)
+function YaCAServerModule.changePlayerAliveStatus(source, isAlive)
     if not playerVoiceSettings[source] then
         return
     end
 
     playerVoiceSettings[source].forceMuted = not isAlive
-    TriggerClientEvent("client:yaca:forceMuteClient", -1, source, playerVoiceSettings[source].forceMuted)
+    TriggerClientEvent("client:yaca:muteTarget", -1, source, playerVoiceSettings[source].forceMuted)
 end
 
-return YaCAServer
+return YaCAServerModule
