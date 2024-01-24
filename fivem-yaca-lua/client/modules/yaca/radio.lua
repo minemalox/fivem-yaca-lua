@@ -1,4 +1,4 @@
-local activeRadioChannels = nil
+local activeRadioChannel = 1
 local defaultRadioChannelSettings = {
     volume = 1.0,
     stereo = YacaStereoMode.STEREO,
@@ -6,15 +6,16 @@ local defaultRadioChannelSettings = {
     frequency = 0,
 }
 
-local radioEnabled = true
+local radioEnabled = false
 local radioChannelSettings = {}
 local playersInRadioChannel = {}
 local playersWithShortRange = {}
 local radioFrequenceSetted = false
 local radioTalking = false
-local radioInited = false
 
 local YaCARadioModule = {}
+
+YaCARadioModule.radioInited = false
 
 function YaCARadioModule.initRadioSettings()
     for i = 1, Settings.MaxRadioChannels, 1 do
@@ -50,8 +51,8 @@ function YaCARadioModule.enableRadio(state)
         end
     end
 
-    if state and not radioInited then
-        radioInited = true
+    if state and not YaCARadioModule.radioInited then
+        YaCARadioModule.radioInited = true
         YaCARadioModule.initRadioSettings()
     end
 end
@@ -61,7 +62,7 @@ function YaCARadioModule.changeRadioFrequency(frequency)
         return
     end
 
-    TriggerServerEvent("server:yaca:changeRadioFrequency", activeRadioChannels, frequency)
+    TriggerServerEvent("server:yaca:changeRadioFrequency", activeRadioChannel, frequency)
 end
 
 function YaCARadioModule.muteRadioChannel()
@@ -69,7 +70,7 @@ function YaCARadioModule.muteRadioChannel()
         return
     end
 
-    local channel = activeRadioChannels
+    local channel = activeRadioChannel
     if radioChannelSettings[channel].frequency == 0 then
         return
     end
@@ -82,7 +83,7 @@ function YaCARadioModule.radioTalkingStateToPlugin(state)
         YaCAMain.getPlayerByID(cache.serverId),
         YacaFilterEnum.RADIO,
         state,
-        activeRadioChannels
+        activeRadioChannel
     )
 end
 
@@ -128,7 +129,7 @@ end
 
 function YaCARadioModule.setRadioMuteState(channel, state)
     radioChannelSettings[channel].muted = state
-    YaCARadio.disableRadioFromPlayerInChannel(channel)
+    YaCARadioModule.disableRadioFromPlayerInChannel(channel)
 end
 
 function YaCARadioModule.leaveRadioChannel(client_ids, frequency)
@@ -160,15 +161,15 @@ function YaCARadioModule.changeActiveRadioChannel(channel)
     end
 
     TriggerServerEvent("server:yaca:changeActiveRadioChannel", channel)
-    activeRadioChannels = channel
+    activeRadioChannel = channel
 end
 
 function YaCARadioModule.changeRadioChannelVolume(higher)
-    if not YaCAMain.isPluginInitialized() or not radioEnabled or radioChannelSettings[activeRadioChannels].frequency == 0 then
+    if not YaCAMain.isPluginInitialized() or not radioEnabled or radioChannelSettings[activeRadioChannel].frequency == 0 then
         return
     end
 
-    local channel = activeRadioChannels
+    local channel = activeRadioChannel
     local oldVolume = radioChannelSettings[channel].volume
     radioChannelSettings[channel].volume = math.clamp(oldVolume + (higher and 0.17 or -0.17), 0.0, 1.0)
 
@@ -184,11 +185,11 @@ function YaCARadioModule.changeRadioChannelVolume(higher)
 end
 
 function YaCARadioModule.changeRadioChannelStereo()
-    if not YaCAMain.isPluginInitialized() or not radioEnabled or radioChannelSettings[activeRadioChannels].frequency == 0 then
+    if not YaCAMain.isPluginInitialized() or not radioEnabled or radioChannelSettings[activeRadioChannel].frequency == 0 then
         return
     end
 
-    local channel = activeRadioChannels
+    local channel = activeRadioChannel
 
     if radioChannelSettings[channel].stereo == YacaStereoMode.STEREO then
         radioChannelSettings[channel].stereo = YacaStereoMode.MONO_LEFT
@@ -217,7 +218,7 @@ function YaCARadioModule.radioTalkingStateToPluginWithWhisper(state, targets)
         comDeviceTargets,
         YacaFilterEnum.RADIO,
         state,
-        activeRadioChannels,
+        activeRadioChannel,
         nil,
         CommDeviceMode.SENDER,
         CommDeviceMode.RECEIVER
@@ -283,7 +284,7 @@ function YaCARadioModule.radioTalkingStart(state, clearPedTasks)
         if radioTalking then
             radioTalking = false
 
-            if YaCAMain.useWhisper then
+            if not YaCAMain.useWhisper then
                 YaCARadioModule.radioTalkingStateToPlugin(false)
             end
 

@@ -16,6 +16,9 @@ RegisterNetEvent('client:yaca:changeVoiceRange', YaCAMain.changeVoiceRange)
 RegisterNetEvent('client:yaca:muteTarget', YaCAMain.muteTarget)
 
 RegisterNetEvent('client:yaca:setRadioFreq', YaCARadio.setRadioFrequency)
+RegisterNetEvent('client:yaca:radioTalking', YaCARadio.radioTalking)
+RegisterNetEvent('client:yaca:setRadioMuteState', YaCARadio.setRadioMuteState)
+RegisterNetEvent('client:yaca:leaveRadioChannel', YaCARadio.leaveRadioChannel)
 
 RegisterNetEvent('client:yaca:addRemovePlayerIntercomFilter', YaCAMain.addRemovePlayerIntercomFilter)
 
@@ -63,7 +66,7 @@ local radioKeybind = lib.addKeybind({
         YaCARadio.radioTalkingStart(true)
     end,
     onReleased = function(self)
-        YaCARadio.radioTalkingStart(false)
+        YaCARadio.radioTalkingStart(false, true)
     end
 })
 
@@ -88,8 +91,6 @@ AddStateBagChangeHandler('yaca_megaphone', nil, function (bagName, key, value, _
 
     local player = GetPlayerFromStateBagName(bagName)
 
-    print(player)
-
     if not player or player == 0 then
         return
     end
@@ -106,7 +107,6 @@ AddStateBagChangeHandler('yaca_megaphone', nil, function (bagName, key, value, _
         isOwnPlayer and CommDeviceMode.SENDER or CommDeviceMode.RECEIVER,
         isOwnPlayer and CommDeviceMode.RECEIVER or CommDeviceMode.SENDER
     )
-    YaCAMain.setCommDeviceVolume(YacaFilterEnum.MEGAPHONE, 1.0)
 end)
 
 if Settings.Debug then
@@ -119,7 +119,7 @@ if Settings.Debug then
     end, false)
 
     RegisterCommand('changeRadioFrequency', function(source, args)
-        YaCARadio.changeRadioFrequency(args[1])
+        YaCARadio.changeRadioFrequency(tonumber(args[1]))
     end, false)
 
     RegisterCommand('muteRadioChannel', function()
@@ -127,24 +127,21 @@ if Settings.Debug then
     end, false)
 
     RegisterCommand('changeActiveRadioChannel', function(source, args)
-        YaCARadio.changeActiveRadioChannel(args[1])
+        YaCARadio.changeActiveRadioChannel(tonumber(args[1]))
     end, false)
 
     RegisterCommand('changeRadioChannelVolume', function(source, args)
-        YaCARadio.changeRadioChannelVolume(args[1])
+        YaCARadio.changeRadioChannelVolume(tonumber(args[1]))
     end, false)
 
     RegisterCommand('changeRadioChannelStereo', function(source, args)
         YaCARadio.changeRadioChannelStereo()
     end, false)
 
-    RegisterCommand('enableIntercom', function (source, args)
-        YaCAMain.addRemovePlayerIntercomFilter({args[1], args[2]}, args[3] == 'true')
+    RegisterCommand('intercom', function (source, args)
+        local source = tonumber(args[1])
+        local target = tonumber(args[2])
+
+        YaCAMain.addRemovePlayerIntercomFilter({source, target}, args[3] == 'true')
     end, false)
-
-    RegisterCommand('disableIntercom', function (source, args)
-        YaCAMain.addRemovePlayerIntercomFilter({args[1], args[2]}, args[3] == 'false')
-    end, false)
-
-
 end

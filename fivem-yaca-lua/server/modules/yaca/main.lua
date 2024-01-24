@@ -101,6 +101,13 @@ function YaCAServerModule.handlePlayerDisconnect()
     Utils.removeGeneratedName(playerVoiceSettings[src].ingameName)
 
     -- TODO: remove player from all radio channels
+    for key, value in pairs(YaCARadio.radioFrequenceMap) do
+        value[src] = nil
+        if #value == 0 then
+            YaCARadio.radioFrequenceMap[key] = nil
+        end
+    end
+
 
     playerVoiceSettings[src] = nil
     TriggerClientEvent("client:yaca:disconnect", -1, src)

@@ -17,7 +17,7 @@ YaCAClientModule.webSocketStarted = false
 YaCAClientModule.canUseMegaphone = false
 YaCAClientModule.useWhisper = false
 
-LocalPlayer.state:set('YaCAClientModule_megaphone', false, true)
+LocalPlayer.state:set('yaca_megaphone', false, true)
 
 function YaCAClientModule.init(data)
     lib.print.info('[YaCAClientModule-Websocket]: Connected! FirstConnect: ' .. tostring(firstConnect))
@@ -26,7 +26,7 @@ function YaCAClientModule.init(data)
         firstConnect = false
         YaCAClientModule.initRequest(data)
     else
-        TriggerServerEvent('server:YaCAClientModule:wsReady')
+        TriggerServerEvent('server:yaca:wsReady')
     end
 end
 
@@ -103,11 +103,13 @@ function YaCAClientModule.handleResponse(payload)
 
     if payload.code == "OK" then
         if payload.requestType == "JOIN" then
-            TriggerServerEvent("server:YaCAClientModule:addPlayer", tonumber(payload.message))
+            TriggerServerEvent("server:yaca:addPlayer", tonumber(payload.message))
 
             -- TODO: Range interval neustarten
 
-            -- TODO: Set radio sett
+            if YaCARadio.radioInited then
+                YaCARadio.initRadioSettings()
+            end
             return
         end
 
@@ -150,10 +152,11 @@ function YaCAClientModule.handleTalkState(payload)
 end
 
 function YaCAClientModule.getPlayerByID(playerId)
-    return allPlayers[playerId]
+    return allPlayers[tonumber(playerId)]
 end
 
 function YaCAClientModule.addPlayers(dataObjects)
+    print("addPlayers", json.encode(dataObjects))
     if not dataObjects[1] then
         dataObjects = { dataObjects }
     end
@@ -290,7 +293,7 @@ function YaCAClientModule.changeMyVoiceRange(toggle)
     end)
 
     print("Voice Range: " .. voiceRange .. "m")
-    TriggerServerEvent("server:YaCAClientModule:changeVoiceRange", rangeIndex)
+    TriggerServerEvent("server:yaca:changeVoiceRange", rangeIndex)
 
     -- Statebags.setLocalData("range", rangeIndex)
 
@@ -394,7 +397,7 @@ function YaCAClientModule.setCommDeviceStereomode(commType, mode, channel)
 
     local protocal = {
         comm_type = commType,
-        stereo_mode = mode,
+        output_mode = mode,
     }
 
     if channel then
@@ -412,9 +415,7 @@ end
 function YaCAClientModule.useMegaphone(state)
     state = state or false
 
-    print("useMegaphone: " .. tostring(state), YaCAClientModulePluginLocal.lastMegaphoneState, YaCAClientModule.canUseMegaphone)
-
-    if not cache.vehicle or cache.vehicle == 0 then
+    if not cache.vehicle or cache.vehicle == 0 or (cache.seat ~= -1 and cache.seat ~= 0) then
         return
     end
 
@@ -423,7 +424,7 @@ function YaCAClientModule.useMegaphone(state)
     end
 
     YaCAClientModulePluginLocal.lastMegaphoneState = state
-    TriggerServerEvent("server:YaCAClientModule:useMegaphone", state)
+    TriggerServerEvent("server:yaca:useMegaphone", state)
 end
 
 function YaCAClientModule.muteTarget(target, isMuted)
@@ -437,31 +438,21 @@ function YaCAClientModule.muteTarget(target, isMuted)
 end
 
 function YaCAClientModule.addRemovePlayerIntercomFilter(targetIds, state)
-    local playersToRemove = {}
-    local playersToAdd = {}
+    if type(targetIds) ~= "table" then
+        targetIds = { targetIds }
+    end
+
+    local players = {}
 
     for _, targetId in pairs(targetIds) do
         local playerData = YaCAClientModule.getPlayerByID(targetId)
-        if not playerData then
-            goto continue
+
+        if playerData then
+            players[#players + 1] = targetId
         end
-
-        if state then
-            playersToAdd[#playersToAdd + 1] = playerData.clientId
-        else
-            playersToRemove[#playersToRemove + 1] = playerData.clientId
-        end
-
-        ::continue::
     end
 
-    if #playersToRemove > 0 then
-        YaCAClientModule.setPlayersCommType(playersToRemove, YacaFilterEnum.INTERCOM, false)
-    end
-
-    if #playersToAdd > 0 then
-        YaCAClientModule.setPlayersCommType(playersToAdd, YacaFilterEnum.INTERCOM, true)
-    end
+    YaCAClientModule.setPlayersCommType(players, YacaFilterEnum.PHONE_HISTORICAL, state, nil, nil, CommDeviceMode.TRANSCEIVER, CommDeviceMode.TRANSCEIVER)
 end
 
 return YaCAClientModule

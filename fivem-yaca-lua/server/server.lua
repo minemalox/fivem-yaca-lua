@@ -1,3 +1,4 @@
+lib.locale()
 string = lib.string
 
 Utils = require 'server.modules.utils'
@@ -12,9 +13,9 @@ RegisterNetEvent('server:yaca:useMegaphone', YaCAServerMain.useMegaphone)
 
 RegisterNetEvent('server:yaca:enableRadio', YaCAServerRadio.enableRadio)
 RegisterNetEvent('server:yaca:changeRadioFrequency', YaCAServerRadio.changeRadioFrequency)
-RegisterNetEvent('server:yaca:muteRadioChannel', YaCAServerRadio.muteRadioChannel)
-RegisterNetEvent('server:yaca:radioTalking', YaCAServerRadio.radioTalking)
-RegisterNetEvent('server:yaca:changeActiveRadioChannel', YaCAServerRadio.changeActiveRadioChannel)
+RegisterNetEvent('server:yaca:muteRadioChannel', YaCAServerRadio.radioChannelMute)
+RegisterNetEvent('server:yaca:radioTalking', YaCAServerRadio.radioTalkingState)
+RegisterNetEvent('server:yaca:changeActiveRadioChannel', YaCAServerRadio.radioActiveChannelChange)
 
 AddEventHandler('playerDropped', YaCAServerMain.handlePlayerDisconnect)
 

@@ -1,8 +1,9 @@
 
 local playerRadioSetting = {}
-local radioFrequenceMap = {}
 
 local YaCARadio = {}
+
+YaCARadio.radioFrequenceMap = {}
 
 function YaCARadio.initRadioSettings(source)
     playerRadioSetting[source] = {
@@ -53,11 +54,11 @@ function YaCARadio.changeRadioFrequency(channel, frequency)
         YaCAServerRadio.leaveRadioFrequency(src, channel, playerRadioSetting[src].frequencies[channel])
     end
 
-    if not radioFrequenceMap[frequency] then
-        radioFrequenceMap[frequency] = {}
+    if not YaCARadio.radioFrequenceMap[frequency] then
+        YaCARadio.radioFrequenceMap[frequency] = {}
     end
 
-    radioFrequenceMap[frequency][src] = { muted = false }
+    YaCARadio.radioFrequenceMap[frequency][src] = { muted = false }
 
     playerRadioSetting[src].frequencies[channel] = frequency
 
@@ -68,11 +69,11 @@ end
 function YaCARadio.leaveRadioFrequency(source, channel, frequency)
     frequency = frequency == "0" and playerRadioSetting[source].frequencies[channel] or frequency
 
-    if radioFrequenceMap[frequency] then
+    if YaCARadio.radioFrequenceMap[frequency] then
         return
     end
 
-    local allPlayersInChannel = radioFrequenceMap[frequency]
+    local allPlayersInChannel = YaCARadio.radioFrequenceMap[frequency]
 
     playerRadioSetting[source].frequencies[channel] = "0"
 
@@ -94,8 +95,8 @@ function YaCARadio.leaveRadioFrequency(source, channel, frequency)
 
     allPlayersInChannel[source] = nil
 
-    if #radioFrequenceMap[frequency] == 0 then
-        radioFrequenceMap[frequency] = nil
+    if #YaCARadio.radioFrequenceMap[frequency] == 0 then
+        YaCARadio.radioFrequenceMap[frequency] = nil
     end
 end
 
@@ -103,7 +104,7 @@ function YaCARadio.radioChannelMute(channel)
     local src = source
 
     local radioFrequency = playerRadioSetting[src].frequencies[channel]
-    local foundPlayer = radioFrequenceMap[radioFrequency][src]
+    local foundPlayer = YaCARadio.radioFrequenceMap[radioFrequency][src]
     if not foundPlayer then
         return
     end
@@ -113,19 +114,31 @@ function YaCARadio.radioChannelMute(channel)
     TriggerClientEvent("client:yaca:setRadioMuteState", src, channel, foundPlayer.muted)
 end
 
-function YaCARadio.radioTalkingState(state)
+function YaCARadio.radioActiveChannelChange(channel)
     local src = source
 
-    if not playerRadioSetting[src].activated then
+    if not tonumber(channel) or channel < 1 or channel > Settings.MaxRadioChannels then
         return
     end
 
-    local radioFrequency = playerRadioSetting[src].frequencies[playerRadioSetting[src].currentChannel]
+    playerRadioSetting[src].currentChannel = channel
+end
+
+function YaCARadio.radioTalkingState(state)
+    local src = source
+
+    local radioSettings = playerRadioSetting[src]
+
+    if not radioSettings?.activated then
+        return
+    end
+
+    local radioFrequency = radioSettings?.frequencies[radioSettings?.currentChannel]
     if not radioFrequency then
         return
     end
     
-    local getPlayers = radioFrequenceMap[radioFrequency]
+    local getPlayers = YaCARadio.radioFrequenceMap[radioFrequency]
 
     local targets = {}
     local targetsToSender = {}
@@ -145,13 +158,14 @@ function YaCARadio.radioTalkingState(state)
             goto continue
         end
 
-        if not playerRadioSetting[key].activated then
+        local targetRadioSettings = playerRadioSetting[key]
+        if not targetRadioSettings?.activated then
             goto continue
         end
 
-        local shortRange = not playerRadioSetting[src].hasLong and not playerRadioSetting[key].hasLong
+        local shortRange = not radioSettings?.hasLong and not targetRadioSettings?.hasLong
 
-        if (playerRadioSetting[src].hasLong and playerRadioSetting[key].hasLong) or shortRange then
+        if (radioSettings?.hasLong and targetRadioSettings?.hasLong) or shortRange then
             targets[#targets + 1] = key
 
             radioInfos[key] = {
