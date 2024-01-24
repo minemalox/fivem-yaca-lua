@@ -58,6 +58,8 @@ function NUI.SendWSMessage(msg)
         return lib.print.verbose("[Voice-Websocket]: Websocket not connected")
     end
 
+    print("[YACA-Websocket]: Sending message: ", json.encode(msg))
+
     SendNuiMessage(json.encode({
         action = "command",
         data = msg

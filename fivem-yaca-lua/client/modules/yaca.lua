@@ -2,6 +2,7 @@ local allPlayers = {}
 
 local YaCA = {}
 
+local isTalking = false
 local useWhisper = false
 local firstConnect = true
 
@@ -11,8 +12,10 @@ local yacaPluginLocal = {
     lastMegaphoneState = false,
     canUseMegaphone = false,
 }
+local isPlayerMuted = false
 
 YaCA.webSocketStarted = false
+YaCA.canUseMegaphone = false
 
 function YaCA.init(data)
     lib.print.info('[YaCA-Websocket]: Connected! FirstConnect: ' .. tostring(firstConnect))
@@ -113,20 +116,32 @@ function YaCA.handleResponse(payload)
     end
 
     BeginTextCommandThefeedPost("STRING")
-    AddTextComponentSubstringPlayerName("YaCA:" .. message)
+    AddTextComponentSubstringPlayerName("YaCA: " .. message)
     ThefeedSetNextPostBackgroundColor(6)
     EndTextCommandThefeedPostTicker(false, false)
 end
 
 function YaCA.handleTalkState(payload)
-    -- TODO: handle talk states
+    local localIsTalking = not isPlayerMuted and not not tonumber(payload.message)
+
+    if isTalking ~= localIsTalking then
+        isTalking = localIsTalking
+
+        SetPlayerTalkingOverride(cache.playerId, isTalking)
+
+        if isTalking then
+            PlayFacialAnim(cache.ped, "mic_chatter", "mp_facial");
+        else
+            PlayFacialAnim(cache.ped, "mood_normal_1", "facials@gen_male@variations@normal");
+        end
+    end
 end
 
 function YaCA.getPlayerByID(playerId)
     return allPlayers[playerId]
 end
 
---[[ function YaCA.addPlayers(dataObjects)
+function YaCA.addPlayers(dataObjects)
     if not dataObjects[1] then
         dataObjects = { dataObjects }
     end
@@ -150,7 +165,7 @@ end
 
         :: continue ::
     end
-end ]]
+end
 
 function YaCA.playerDisconnected(playerId)
     if not playerId then
@@ -165,7 +180,12 @@ function YaCA.calcPlayers()
     local localPos = GetEntityCoords(cache.ped)
     local currentRoom = GetRoomKeyFromEntity(cache.ped)
 
-    local localData = Statebags.getLocalData()
+    --[[ local localData = Statebags.getLocalData()
+    if not localData then
+        return
+    end ]]
+
+    local localData = YaCA.getPlayerByID(cache.serverId)
     if not localData then
         return
     end
@@ -176,12 +196,17 @@ function YaCA.calcPlayers()
         end
 
         local playerSource = GetPlayerServerId(playerId)
-        
-        local playerState = Statebags.getPlayerData(playerSource)
+
+        --[[ local playerState = Statebags.getPlayerData(playerSource)
+        if not playerState or not playerState.clientId then
+            goto continue
+        end ]]
+
+        local playerState = YaCA.getPlayerByID(playerSource)
         if not playerState or not playerState.clientId then
             goto continue
         end
-        
+
         local playerPed = GetPlayerPed(playerId)
 
         local muffleIntensity = 0
@@ -193,7 +218,7 @@ function YaCA.calcPlayers()
             client_id = playerState.clientId,
             position = GetEntityCoords(playerPed),
             direction = GetEntityForwardVector(playerPed),
-            range = Settings.VoiceRanges[playerState.range] or 1,
+            range = playerState.range,
             is_underwater = IsPedSwimmingUnderWater(playerPed),
             muffle_intensity = muffleIntensity,
             is_muted = playerState.forceMuted
@@ -209,7 +234,7 @@ function YaCA.calcPlayers()
         player = {
             player_direction = Utils.getCamDirection(),
             player_position = localPos,
-            player_range = Settings.VoiceRanges[localData.range] or 1,
+            player_range = localData.range,
             player_is_underwater = IsPedSwimmingUnderWater(cache.ped),
             player_is_muted = localData.forceMuted,
             players_list = players,
@@ -220,7 +245,7 @@ end
 local visualVoiceRangeTick = false
 local rangeIndex = Settings.DefaultVoiceRange
 
-function YaCA.changeVoiceRange(toggle)
+function YaCA.changeMyVoiceRange(toggle)
     if not yacaPluginLocal.canChangeVoiceRange then
         return false
     end
@@ -253,11 +278,138 @@ function YaCA.changeVoiceRange(toggle)
     end)
 
     print("Voice Range: " .. voiceRange .. "m")
-    -- TriggerServerEvent("server:yaca:changeVoiceRange", voiceRange)
+    TriggerServerEvent("server:yaca:changeVoiceRange", rangeIndex)
 
-    Statebags.setLocalData("range", rangeIndex)
+    -- Statebags.setLocalData("range", rangeIndex)
 
     return true
+end
+
+function YaCA.changeVoiceRange(target, range)
+    local playerData = YaCA.getPlayerByID(target)
+    if not playerData then
+        return
+    end
+
+    playerData.range = range
+end
+
+function YaCA.setPlayersCommType(players, type, state, channel, range, ownMode, otherPlayersMode)
+    if type(players) ~= "table" then
+        return
+    end
+
+    local cids = {}
+    if ownMode then
+        cids[#cids + 1] = {
+            client_id = YaCA.getPlayerByID(cache.serverId).clientId,
+            mode = ownMode,
+        }
+    end
+
+    for _, player in pairs(players) do
+        local playerData = YaCA.getPlayerByID(player)
+        if not playerData then
+            goto continue
+        end
+
+        cids[#cids + 1] = {
+            client_id = playerData.clientId,
+            mode = otherPlayersMode,
+        }
+
+        :: continue ::
+    end
+
+    local protocal = {
+        on = state and true or false,
+        comm_type = type,
+        members = cids,
+    }
+
+    if channel then
+        protocal.channel = channel
+    end
+
+    if range then
+        protocal.range = range
+    end
+
+    NUI.SendWSMessage({
+        base = {
+            request_type = "INGAME",
+        },
+        communication = protocal,
+    })
+end
+
+function YaCA.isCommTypeValid(type)
+    local valid = YacaFilterEnum[type]
+    if not valid then
+        lib.print.error("[YaCA-Websocket]: Invalid commtype: " .. type)
+        return false
+    end
+
+    return true
+end
+
+function YaCA.setCommDeviceVolume(type, volume, channel)
+    if not YaCA.isCommTypeValid(type) then
+        return
+    end
+
+    local protocal = {
+        comm_type = type,
+        volume = math.clamp(volume, 0, 1),
+    }
+
+    if channel then
+        protocal.channel = channel
+    end
+
+    NUI.SendWSMessage({
+        base = {
+            request_type = "INGAME",
+        },
+        comm_device_settings = protocal,
+    })
+end
+
+function YaCA.setCommDeviceStereomode(type, mode, channel)
+    if not YaCA.isCommTypeValid(type) then
+        return
+    end
+
+    local protocal = {
+        comm_type = type,
+        stereo_mode = mode,
+    }
+
+    if channel then
+        protocal.channel = channel
+    end
+
+    NUI.SendWSMessage({
+        base = {
+            request_type = "INGAME",
+        },
+        comm_device_settings = protocal,
+    })
+end
+
+function YaCA.useMegaphone(state)
+    state = state or false
+
+    if not cache.vehicle or cache.vehicle == 0 then
+        return
+    end
+
+    if not YaCA.canUseMegaphone or yacaPluginLocal.lastMegaphoneState == state then
+        return
+    end
+
+    yacaPluginLocal.lastMegaphoneState = state
+    TriggerServerEvent("server:yaca:useMegaphone", state)
 end
 
 return YaCA

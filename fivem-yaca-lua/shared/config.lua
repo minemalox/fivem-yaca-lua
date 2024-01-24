@@ -1,4 +1,6 @@
 Settings = {
+    Debug = true,
+
     -- Voice range in meters
     VoiceRanges = {
         [1] = 1,
@@ -23,4 +25,8 @@ Settings = {
     mufflingRange = 2,
 
     unmuteDelay = 400,
+
+    DefaultKeybinds = {
+        changeVoiceRange = 'Y',
+    }
 }

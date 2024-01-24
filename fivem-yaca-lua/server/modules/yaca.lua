@@ -13,9 +13,8 @@ function YaCAServer.connectToVoice()
     end
 
     playerVoiceSettings[src] = {
-        voiceRange = 3,
+        voiceRange = Settings.DefaultVoiceRange,
         voiceFirstConnect = true,
-        maxVoiceRangeInMeter = 64,
         forceMuted = false,
         ingameName = name,
         mutedOnPhone = false,
@@ -54,24 +53,27 @@ function YaCAServer.addNewPlayer(clientId)
     local src = source
 
     if not clientId then
-        print("YaCA: addNewPlayer: missing clientId")
+        lib.print.error("YaCA: addNewPlayer: missing clientId")
         return
     end
 
-    Player(src).state.yaca = {
-        clientId = clientId,
-        forceMuted = playerVoiceSettings[src].forceMuted,
-        range = playerVoiceSettings[src].voiceRange,
-        isTalking = false,
-        phoneCallMemberIds = playerVoiceSettings[src].phoneCallMemberIds,
-        mutedOnPhone = playerVoiceSettings[src].mutedOnPhone,
-    }
+    --[[
+        Player(src).state.yaca = {
+            clientId = clientId,
+            forceMuted = playerVoiceSettings[src].forceMuted,
+            range = playerVoiceSettings[src].voiceRange,
+            isTalking = false,
+            phoneCallMemberIds = playerVoiceSettings[src].phoneCallMemberIds,
+            mutedOnPhone = playerVoiceSettings[src].mutedOnPhone
+        }
+    ]]
 
-    --[[  playerVoicePlugin[src] = {
+    playerVoicePlugin[src] = {
+        playerId = src,
         clientId = clientId,
         forceMuted = playerVoiceSettings[src].forceMuted,
         range = playerVoiceSettings[src].voiceRange,
-        playerId = src,
+        phoneCallMemberIds = playerVoiceSettings[src].phoneCallMemberIds,
         mutedOnPhone = playerVoiceSettings[src].mutedOnPhone,
     }
 
@@ -88,7 +90,7 @@ function YaCAServer.addNewPlayer(clientId)
         ::continue::
     end
 
-    TriggerClientEvent("client:yaca:addPlayers", src, allPlayersData) ]]
+    TriggerClientEvent("client:yaca:addPlayers", src, allPlayersData)
 end
 
 function YaCAServer.handlePlayerDisconnect()
@@ -109,15 +111,52 @@ end
 function YaCAServer.wsReady()
     local src = source
 
-    if not playerVoiceSettings[src] then
-        return
-    end
-
-    if not playerVoiceSettings[src].voiceFirstConnect then
+    if not playerVoiceSettings[src] or not playerVoiceSettings[src].voiceFirstConnect then
         return
     end
 
     YaCAServer.connect(src)
+end
+
+function YaCAServer.changeVoiceRange(range)
+    local src = source
+
+    if not playerVoiceSettings[src] then
+        return
+    end
+
+    playerVoiceSettings[src].voiceRange = range
+    TriggerClientEvent("client:yaca:changeVoiceRange", -1, range)
+
+    if not playerVoicePlugin[src] then
+        return
+    end
+
+    playerVoicePlugin[src].range = range
+end
+
+function YaCAServer.useMegaphone(state)
+    local src = source
+
+    local megaphoneState = Player(src).state['yaca_megaphone']
+    local ped = GetPlayerPed(src)
+    local vehicle = GetVehiclePedIsIn(ped, false)
+
+    if not vehicle then
+        return
+    end
+
+    local isFrontSeat = GetPedInVehicleSeat(vehicle, -1) == ped or GetPedInVehicleSeat(vehicle, 0) == ped
+
+    if not isFrontSeat then
+        return
+    end
+
+    if (not state and not megaphoneState) or (state and megaphoneState) then
+        return
+    end
+
+    Player(src).state:set('yaca_megaphone', state, true)
 end
 
 return YaCAServer
