@@ -7,6 +7,10 @@ function YaCAServerModule.getPlayerPlugin(src)
     return playerVoicePlugin[src]
 end
 
+function YaCAServerModule.getPlayerSettings(src)
+    return playerVoiceSettings[src]
+end
+
 function YaCAServerModule.connectToVoice()
     local src = source
 

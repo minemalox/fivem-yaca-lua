@@ -229,15 +229,75 @@ function YaCAClientModule.calcPlayers()
             muffleIntensity = 10 -- 10 is the maximum intensity
         end
 
+        local playerCoords = GetEntityCoords(playerPed)
+        local forwardVector = GetEntityForwardVector(playerPed)
+        local isSwimming = IsPedSwimmingUnderWater(playerPed)
+
         players[#players + 1] = {
             client_id = playerState.clientId,
-            position = GetEntityCoords(playerPed),
-            direction = GetEntityForwardVector(playerPed),
+            position = playerCoords,
+            direction = forwardVector,
             range = playerState.range,
-            is_underwater = IsPedSwimmingUnderWater(playerPed),
+            is_underwater = isSwimming,
             muffle_intensity = muffleIntensity,
             is_muted = playerState.forceMuted
         }
+
+        local phoneCallMemberIds = Player(playerSource).state:get('yaca_phoneSpeaker')
+        if not phoneCallMemberIds then
+            goto continue
+        end
+
+        local applyPhoneSpeaker = {}
+        local removePhoneSpeaker = {}
+
+        for _, phoneCallMemberId in pairs(phoneCallMemberIds) do
+            local phoneCallMember = YaCAClientModule.getPlayerByID(phoneCallMemberId)
+            if not phoneCallMember then
+                goto speakerContinue
+            end
+
+            if phoneCallMember.mutedOnPhone or phoneCallMember.forceMuted or #(localPos - playerCoords) > Settings.MaxPhoneSpeekerRange then
+                if not applyPhoneSpeaker[phoneCallMemberId] then
+                    removePhoneSpeaker[phoneCallMemberId] = true
+                end
+                goto speakerContinue
+            end
+
+            players[#players + 1] = {
+                client_id = phoneCallMember.clientId,
+                position = playerCoords,
+                direction = forwardVector,
+                range = Settings.MaxPhoneSpeekerRange,
+                is_underwater = isSwimming,
+            }
+
+            if not removePhoneSpeaker[phoneCallMemberId] then
+                removePhoneSpeaker[phoneCallMemberId] = nil
+            end
+            applyPhoneSpeaker[phoneCallMemberId] = true
+
+
+            :: speakerContinue ::
+        end
+
+        local applyPhoneSpeakerArray = {}
+        for index, _ in pairs(applyPhoneSpeaker) do
+            applyPhoneSpeakerArray[#applyPhoneSpeakerArray + 1] = index
+        end 
+
+        local removePhoneSpeakerArray = {}
+        for index, _ in pairs(removePhoneSpeaker) do
+            removePhoneSpeakerArray[#removePhoneSpeakerArray + 1] = index
+        end
+
+        if #applyPhoneSpeakerArray > 0 then
+            YaCAClientModule.setPlayersCommType(applyPhoneSpeakerArray, YacaFilterEnum.PHONE_SPEAKER, true)
+        end
+
+        if #removePhoneSpeakerArray > 0 then
+            YaCAClientModule.setPlayersCommType(removePhoneSpeakerArray, YacaFilterEnum.PHONE_SPEAKER, false)
+        end
 
         :: continue ::
     end

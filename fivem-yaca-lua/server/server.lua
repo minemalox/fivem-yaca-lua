@@ -4,6 +4,7 @@ string = lib.string
 Utils = require 'server.modules.utils'
 YaCAServerMain = require 'server.modules.yaca.main'
 YaCAServerRadio = require 'server.modules.yaca.radio'
+YaCAServerPhone = require 'server.modules.yaca.phone'
 
 RegisterNetEvent('server:yaca:nuiReady', YaCAServerMain.connectToVoice)
 RegisterNetEvent('server:yaca:addPlayer', YaCAServerMain.addNewPlayer)
@@ -21,6 +22,8 @@ AddEventHandler('playerDropped', YaCAServerMain.handlePlayerDisconnect)
 
 exports('changePlayerAliveStatus', YaCAServerMain.changePlayerAliveStatus)
 exports('SetPlayerAlive', YaCAServerMain.changePlayerAliveStatus)
+
+exports('callPlayer', YaCAServerPhone.callPlayer)
 
 if Settings.Debug then
     RegisterCommand('setAlive', function(source, args)

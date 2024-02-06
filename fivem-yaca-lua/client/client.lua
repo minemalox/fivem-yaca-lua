@@ -6,6 +6,7 @@ Utils = require 'client.modules.utils'
 NUI = require 'client.modules.nui'
 YaCAMain = require 'client.modules.yaca.main'
 YaCARadio = require 'client.modules.yaca.radio'
+YaCAPhone = require 'client.modules.yaca.phone'
 
 NUI.initNUICallbacks()
 
@@ -21,6 +22,11 @@ RegisterNetEvent('client:yaca:setRadioMuteState', YaCARadio.setRadioMuteState)
 RegisterNetEvent('client:yaca:leaveRadioChannel', YaCARadio.leaveRadioChannel)
 
 RegisterNetEvent('client:yaca:addRemovePlayerIntercomFilter', YaCAMain.addRemovePlayerIntercomFilter)
+
+RegisterNetEvent('client:yaca:phone', YaCAPhone.phone)
+RegisterNetEvent('client:yaca:phoneOld', YaCAPhone.phoneOld)
+RegisterNetEvent('client:yaca:phoneMute', YaCAPhone.phoneMute)
+
 
 CreateThread(function()
     while true do
@@ -107,6 +113,26 @@ AddStateBagChangeHandler('yaca_megaphone', nil, function (bagName, key, value, _
         isOwnPlayer and CommDeviceMode.SENDER or CommDeviceMode.RECEIVER,
         isOwnPlayer and CommDeviceMode.RECEIVER or CommDeviceMode.SENDER
     )
+end)
+
+AddStateBagChangeHandler('yaca_phoneSpeaker', nil, function (bagName, key, value, _, replicated)
+    if replicated then
+        return
+    end
+
+    local player = GetPlayerFromStateBagName(bagName)
+
+    if not player or player == 0 then
+        return
+    end
+
+    local serverId = GetPlayerServerId(player)
+
+    if value == nil then
+        YaCAPhone.removePhoneSpeakerFromEntity(serverId)    
+    else
+    
+    end
 end)
 
 if Settings.Debug then
