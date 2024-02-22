@@ -129,9 +129,7 @@ AddStateBagChangeHandler('yaca_phoneSpeaker', nil, function (bagName, key, value
     local serverId = GetPlayerServerId(player)
 
     if value == nil then
-        YaCAPhone.removePhoneSpeakerFromEntity(serverId)    
-    else
-    
+        YaCAPhone.removePhoneSpeakerFromEntity(serverId)
     end
 end)
 

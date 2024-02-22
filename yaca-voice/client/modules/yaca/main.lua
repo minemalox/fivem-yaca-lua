@@ -243,7 +243,8 @@ function YaCAClientModule.calcPlayers()
             is_muted = playerState.forceMuted
         }
 
-        local phoneCallMemberIds = Player(playerSource).state:get('yaca_phoneSpeaker')
+        local phoneCallMemberIds = Player(playerSource).state['yaca_phoneSpeaker']
+
         if not phoneCallMemberIds then
             goto continue
         end
@@ -272,7 +273,7 @@ function YaCAClientModule.calcPlayers()
                 is_underwater = isSwimming,
             }
 
-            if not removePhoneSpeaker[phoneCallMemberId] then
+            if removePhoneSpeaker[phoneCallMemberId] then
                 removePhoneSpeaker[phoneCallMemberId] = nil
             end
             applyPhoneSpeaker[phoneCallMemberId] = true
@@ -284,23 +285,30 @@ function YaCAClientModule.calcPlayers()
         local applyPhoneSpeakerArray = {}
         for index, _ in pairs(applyPhoneSpeaker) do
             applyPhoneSpeakerArray[#applyPhoneSpeakerArray + 1] = index
-        end 
+        end
 
         local removePhoneSpeakerArray = {}
         for index, _ in pairs(removePhoneSpeaker) do
             removePhoneSpeakerArray[#removePhoneSpeakerArray + 1] = index
         end
 
+        print("applyPhoneSpeakerArray", json.encode(applyPhoneSpeakerArray))
+        print("removePhoneSpeakerArray", json.encode(removePhoneSpeakerArray))
+
         if #applyPhoneSpeakerArray > 0 then
-            YaCAClientModule.setPlayersCommType(applyPhoneSpeakerArray, YacaFilterEnum.PHONE_SPEAKER, true)
+            print("setPlayersCommType applyPhoneSpeakerArray")
+            YaCAClientModule.setPlayersCommType(applyPhoneSpeakerArray, YacaFilterEnum.PHONE_SPEAKER, true, nil, nil, CommDeviceMode.RECEIVER, CommDeviceMode.SENDER)
         end
 
         if #removePhoneSpeakerArray > 0 then
-            YaCAClientModule.setPlayersCommType(removePhoneSpeakerArray, YacaFilterEnum.PHONE_SPEAKER, false)
+            print("setPlayersCommType removePhoneSpeakerArray")
+            YaCAClientModule.setPlayersCommType(removePhoneSpeakerArray, YacaFilterEnum.PHONE_SPEAKER, false, nil, nil, CommDeviceMode.RECEIVER, CommDeviceMode.SENDER)
         end
 
         :: continue ::
     end
+
+    print("players", json.encode(players))
 
     NUI.SendWSMessage({
         base = {

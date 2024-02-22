@@ -29,4 +29,20 @@ if Settings.Debug then
     RegisterCommand('setAlive', function(source, args)
         YaCAServerMain.changePlayerAliveStatus(source, args[1] == 'true')
     end, false)
+
+    RegisterCommand('callPlayer', function(source, args)
+        YaCAServerPhone.callPlayer(source, tonumber(args[1]), args[2] == 'true')
+    end, false)
+
+    RegisterCommand('callPlayerOld', function(source, args)
+        YaCAServerPhone.callPlayerOld(source, tonumber(args[1]), args[2] == 'true')
+    end, false)
+
+    RegisterCommand('muteOnPhone', function(source, args)
+        YaCAServerPhone.muteOnPhone(source, args[1] == 'true', false)
+    end, false)
+
+    RegisterCommand('enablePhoneSpeaker', function(source, args)
+        YaCAServerPhone.enablePhoneSpeaker(source, args[1] == 'true', { tonumber(args[2])})
+    end, false)
 end
