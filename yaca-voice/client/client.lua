@@ -27,16 +27,6 @@ RegisterNetEvent('client:yaca:phone', YaCAPhone.phone)
 RegisterNetEvent('client:yaca:phoneOld', YaCAPhone.phoneOld)
 RegisterNetEvent('client:yaca:phoneMute', YaCAPhone.phoneMute)
 
-
-CreateThread(function()
-    while true do
-        Wait(250)
-        if NUI.WebsocketConnected then
-            YaCAMain.calcPlayers()
-        end
-    end
-end)
-
 AddEventHandler('onResourceStop', function(resource)
    if resource == GetCurrentResourceName() then
         NUI.closeConnection()
@@ -105,7 +95,7 @@ AddStateBagChangeHandler('yaca_megaphone', nil, function (bagName, key, value, _
 
     local isOwnPlayer = serverId == cache.serverId
     YaCAMain.setPlayersCommType(
-        isOwnPlayer and {} or YaCAMain.getPlayerByID(serverId),
+        isOwnPlayer and {} or { serverId },
         YacaFilterEnum.MEGAPHONE,
         value ~= nil,
         nil,
@@ -128,8 +118,16 @@ AddStateBagChangeHandler('yaca_phoneSpeaker', nil, function (bagName, key, value
 
     local serverId = GetPlayerServerId(player)
 
-    if value == nil then
-        YaCAPhone.removePhoneSpeakerFromEntity(serverId)
+    print('yaca_phoneSpeaker', serverId, value)
+
+    YaCAPhone.removePhoneSpeakerFromEntity(serverId)
+
+    if value then
+        if not value[1] then
+            value = { value }
+        end
+
+        YaCAMain.setPlayerVariable(serverId, 'phoneCallMemberIds', value)
     end
 end)
 
@@ -163,9 +161,8 @@ if Settings.Debug then
     end, false)
 
     RegisterCommand('intercom', function (source, args)
-        local source = tonumber(args[1])
-        local target = tonumber(args[2])
+        local target = tonumber(args[1])
 
-        YaCAMain.addRemovePlayerIntercomFilter({source, target}, args[3] == 'true')
+        YaCAMain.addRemovePlayerIntercomFilter({cache.serverId, target}, args[2] == 'true')
     end, false)
 end

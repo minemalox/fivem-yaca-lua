@@ -2,6 +2,8 @@ local allPlayers = {}
 
 local YaCAClientModule = {}
 
+local rangeInterval = nil
+
 local isTalking = false
 local firstConnect = true
 
@@ -55,23 +57,26 @@ function YaCAClientModule.initRequest(data)
 end
 
 function YaCAClientModule.initConnection(dataObj)
-    -- TODO: range interval
+    if rangeInterval then
+        Utils.ClearInterval(rangeInterval)
+        rangeInterval = nil
+    end
 
     if not YaCAClientModule.webSocketStarted then
         YaCAClientModule.webSocketStarted = true
 
-        NUI.connect(function ()
-            YaCAClientModule.init(dataObj)
-        end,
-        function (errorCode, reason)
-            lib.print.info('[YaCAClientModule-Websocket]: Disconnected! Code: ' ..  errorCode .. " Reason: " .. reason)
-        end,
-        function (data)
-            YaCAClientModule.handleResponse(data)
-        end,
-        function (data)
-            lib.print.error('[YaCAClientModule-Websocket]: Error: ', data)
-        end)
+        NUI.connect(function()
+                YaCAClientModule.init(dataObj)
+            end,
+            function(errorCode, reason)
+                lib.print.info('[YaCAClientModule-Websocket]: Disconnected! Code: ' .. errorCode .. " Reason: " .. reason)
+            end,
+            function(data)
+                YaCAClientModule.handleResponse(data)
+            end,
+            function(data)
+                lib.print.error('[YaCAClientModule-Websocket]: Error: ', data)
+            end)
     end
     -- TODO: monitor if player is in ingame voice channel
 
@@ -105,7 +110,12 @@ function YaCAClientModule.handleResponse(payload)
         if payload.requestType == "JOIN" then
             TriggerServerEvent("server:yaca:addPlayer", tonumber(payload.message))
 
-            -- TODO: Range interval neustarten
+            if rangeInterval then
+                Utils.ClearInterval(rangeInterval)
+                rangeInterval = nil
+            end
+
+            rangeInterval = Utils.SetInterval(YaCAClientModule.calcPlayers, 250)
 
             if YaCARadio.radioInited then
                 YaCARadio.initRadioSettings()
@@ -149,6 +159,20 @@ function YaCAClientModule.handleTalkState(payload)
             PlayFacialAnim(cache.ped, "mood_normal_1", "facials@gen_male@variations@normal");
         end
     end
+end
+
+function YaCAClientModule.setPlayerVariable(playerId, variable, value)
+    playerId = tonumber(playerId)
+
+    if not playerId then
+        return
+    end
+
+    if not allPlayers[playerId] then
+        allPlayers[playerId] = {}
+    end
+
+    allPlayers[playerId][variable] = value
 end
 
 function YaCAClientModule.getPlayerByID(playerId)
@@ -243,66 +267,59 @@ function YaCAClientModule.calcPlayers()
             is_muted = playerState.forceMuted
         }
 
-        local phoneCallMemberIds = Player(playerSource).state['yaca_phoneSpeaker']
+        if playerState.phoneCallMemberIds and #playerState.phoneCallMemberIds ~= 0 then
+            local applyPhoneSpeaker = {}
+            local removePhoneSpeaker = {}
 
-        if not phoneCallMemberIds then
-            goto continue
-        end
-
-        local applyPhoneSpeaker = {}
-        local removePhoneSpeaker = {}
-
-        for _, phoneCallMemberId in pairs(phoneCallMemberIds) do
-            local phoneCallMember = YaCAClientModule.getPlayerByID(phoneCallMemberId)
-            if not phoneCallMember then
-                goto speakerContinue
-            end
-
-            if phoneCallMember.mutedOnPhone or phoneCallMember.forceMuted or #(localPos - playerCoords) > Settings.MaxPhoneSpeekerRange then
-                if not applyPhoneSpeaker[phoneCallMemberId] then
-                    removePhoneSpeaker[phoneCallMemberId] = true
+            for _, phoneCallMemberId in pairs(playerState.phoneCallMemberIds) do
+                local phoneCallMember = YaCAClientModule.getPlayerByID(phoneCallMemberId)
+                if not phoneCallMember then
+                    goto speakerContinue
                 end
-                goto speakerContinue
+
+                if phoneCallMember.mutedOnPhone or phoneCallMember.forceMuted or #(localPos - playerCoords) > Settings.MaxPhoneSpeekerRange then
+                    if not applyPhoneSpeaker[phoneCallMemberId] then
+                        removePhoneSpeaker[phoneCallMemberId] = true
+                    end
+                    goto speakerContinue
+                end
+
+                players[#players + 1] = {
+                    client_id = phoneCallMember.clientId,
+                    position = playerCoords,
+                    direction = forwardVector,
+                    range = Settings.MaxPhoneSpeekerRange,
+                    is_underwater = isSwimming,
+                }
+
+                if removePhoneSpeaker[phoneCallMemberId] then
+                    removePhoneSpeaker[phoneCallMemberId] = nil
+                end
+                applyPhoneSpeaker[phoneCallMemberId] = true
+
+                :: speakerContinue ::
             end
 
-            players[#players + 1] = {
-                client_id = phoneCallMember.clientId,
-                position = playerCoords,
-                direction = forwardVector,
-                range = Settings.MaxPhoneSpeekerRange,
-                is_underwater = isSwimming,
-            }
-
-            if removePhoneSpeaker[phoneCallMemberId] then
-                removePhoneSpeaker[phoneCallMemberId] = nil
+            local applyPhoneSpeakerArray = {}
+            for index, _ in pairs(applyPhoneSpeaker) do
+                applyPhoneSpeakerArray[#applyPhoneSpeakerArray + 1] = index
             end
-            applyPhoneSpeaker[phoneCallMemberId] = true
 
+            local removePhoneSpeakerArray = {}
+            for index, _ in pairs(removePhoneSpeaker) do
+                removePhoneSpeakerArray[#removePhoneSpeakerArray + 1] = index
+            end
 
-            :: speakerContinue ::
-        end
+            print("applyPhoneSpeakerArray", json.encode(applyPhoneSpeakerArray))
+            print("removePhoneSpeakerArray", json.encode(removePhoneSpeakerArray))
 
-        local applyPhoneSpeakerArray = {}
-        for index, _ in pairs(applyPhoneSpeaker) do
-            applyPhoneSpeakerArray[#applyPhoneSpeakerArray + 1] = index
-        end
+            if #applyPhoneSpeakerArray > 0 then
+                YaCAClientModule.setPlayersCommType(applyPhoneSpeakerArray, YacaFilterEnum.PHONE_SPEAKER, true)
+            end
 
-        local removePhoneSpeakerArray = {}
-        for index, _ in pairs(removePhoneSpeaker) do
-            removePhoneSpeakerArray[#removePhoneSpeakerArray + 1] = index
-        end
-
-        print("applyPhoneSpeakerArray", json.encode(applyPhoneSpeakerArray))
-        print("removePhoneSpeakerArray", json.encode(removePhoneSpeakerArray))
-
-        if #applyPhoneSpeakerArray > 0 then
-            print("setPlayersCommType applyPhoneSpeakerArray")
-            YaCAClientModule.setPlayersCommType(applyPhoneSpeakerArray, YacaFilterEnum.PHONE_SPEAKER, true, nil, nil, CommDeviceMode.RECEIVER, CommDeviceMode.SENDER)
-        end
-
-        if #removePhoneSpeakerArray > 0 then
-            print("setPlayersCommType removePhoneSpeakerArray")
-            YaCAClientModule.setPlayersCommType(removePhoneSpeakerArray, YacaFilterEnum.PHONE_SPEAKER, false, nil, nil, CommDeviceMode.RECEIVER, CommDeviceMode.SENDER)
+            if #removePhoneSpeakerArray > 0 then
+                YaCAClientModule.setPlayersCommType(removePhoneSpeakerArray, YacaFilterEnum.PHONE_SPEAKER, false)
+            end
         end
 
         :: continue ::
@@ -351,19 +368,18 @@ function YaCAClientModule.changeMyVoiceRange(toggle)
         visualVoiceRangeTick = true
         while visualVoiceRangeTick do
             local pos = GetEntityCoords(cache.ped)
-            DrawMarker(1, pos.x, pos.y, pos.z - 0.98, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, (voiceRange * 2.0) - 1.0, (voiceRange * 2.0) - 1.0, 1.0, 136, 0, 255, 255, false, false, 0, false, nil, nil, false)
+            DrawMarker(1, pos.x, pos.y, pos.z - 0.98, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, (voiceRange * 2.0) - 1.0,
+                (voiceRange * 2.0) - 1.0, 1.0, 136, 0, 255, 255, false, false, 0, false, nil, nil, false)
             Wait(0)
         end
     end)
 
-    SetTimeout(5000, function ()
+    SetTimeout(5000, function()
         visualVoiceRangeTick = false
     end)
 
     print("Voice Range: " .. voiceRange .. "m")
     TriggerServerEvent("server:yaca:changeVoiceRange", rangeIndex)
-
-    -- Statebags.setLocalData("range", rangeIndex)
 
     return true
 end
@@ -392,16 +408,12 @@ function YaCAClientModule.setPlayersCommType(players, commType, state, channel, 
 
     for _, player in pairs(players) do
         local playerData = YaCAClientModule.getPlayerByID(player)
-        if not playerData then
-            goto continue
+        if playerData then
+            cids[#cids + 1] = {
+                client_id = playerData.clientId,
+                mode = otherPlayersMode,
+            }
         end
-
-        cids[#cids + 1] = {
-            client_id = playerData.clientId,
-            mode = otherPlayersMode,
-        }
-
-        :: continue ::
     end
 
     local protocal = {
@@ -520,7 +532,8 @@ function YaCAClientModule.addRemovePlayerIntercomFilter(targetIds, state)
         end
     end
 
-    YaCAClientModule.setPlayersCommType(players, YacaFilterEnum.PHONE_HISTORICAL, state, nil, nil, CommDeviceMode.TRANSCEIVER, CommDeviceMode.TRANSCEIVER)
+    YaCAClientModule.setPlayersCommType(players, YacaFilterEnum.INTERCOM, state, nil, nil, CommDeviceMode.RECEIVER,
+        CommDeviceMode.SENDER)
 end
 
 return YaCAClientModule

@@ -49,7 +49,7 @@ function YaCAPhone.enablePhoneSpeaker(player, state, phoneCallMemberIds)
     if state then
         Player(player).state:set('yaca_phoneSpeaker', phoneCallMemberIds, true)
     else
-        Player(player).state:set('yaca_phoneSpeaker', nil, true)
+        Player(player).state:set('yaca_phoneSpeaker', false, true)
     end
 end
 

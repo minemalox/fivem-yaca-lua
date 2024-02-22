@@ -16,11 +16,12 @@ function YaCAPhone.removePhoneSpeakerFromEntity(entity)
     for _, phoneCallMemberId in pairs(entityData.phoneCallMemberIds) do
         local phoneCallMember = YaCAMain.getPlayerByID(phoneCallMemberId)
         if phoneCallMember then
-            playersToSet[#playersToSet + 1] = phoneCallMember
+            playersToSet[#playersToSet + 1] = phoneCallMemberId
         end
     end
 
-    YaCAMain.setPlayersCommType(playersToSet, YacaFilterEnum.PHONE_SPEAKER, false, nil, nil, CommDeviceMode.RECEIVER, CommDeviceMode.SENDER)
+    YaCAMain.setPlayersCommType(playersToSet, YacaFilterEnum.PHONE_SPEAKER, false)
+
     entityData.phoneCallMemberIds = nil
 end
 
@@ -66,7 +67,7 @@ function YaCAPhone.phoneMute(targetId, state, onCallStop)
         return
     end
 
-    if YaCAMain.useWhisper and targetId ~= cache.serverId then
+    if YaCAMain.useWhisper and targetId == cache.serverId then
         YaCAMain.setPlayersCommType({}, YacaFilterEnum.PHONE, not state, nil, nil, CommDeviceMode.SENDER)
     elseif not YaCAMain.useWhisper then
         if state then

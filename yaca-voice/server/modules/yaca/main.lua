@@ -59,17 +59,6 @@ function YaCAServerModule.addNewPlayer(clientId)
         return
     end
 
-    --[[
-        Player(src).state.yaca = {
-            clientId = clientId,
-            forceMuted = playerVoiceSettings[src].forceMuted,
-            range = playerVoiceSettings[src].voiceRange,
-            isTalking = false,
-            phoneCallMemberIds = playerVoiceSettings[src].phoneCallMemberIds,
-            mutedOnPhone = playerVoiceSettings[src].mutedOnPhone
-        }
-    ]]
-
     playerVoicePlugin[src] = {
         playerId = src,
         clientId = clientId,
@@ -90,6 +79,10 @@ function YaCAServerModule.addNewPlayer(clientId)
         allPlayersData[#allPlayersData + 1] = playerVoicePlugin[playerSource]
 
         ::continue::
+    end
+
+    if #allPlayersData == 0 then
+        return
     end
 
     TriggerClientEvent("client:yaca:addPlayers", src, allPlayersData)
